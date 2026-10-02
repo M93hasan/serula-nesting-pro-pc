@@ -1,0 +1,44 @@
+{
+  "name": "serula-nesting-pro-pc",
+  "productName": "Serula Nesting Pro PC",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Serula Nesting Pro Windows desktop application",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "desktop:dev": "electron .",
+    "dist:win": "electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^38.2.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "com.serula.nesting.pro.pc",
+    "productName": "Serula Nesting Pro PC",
+    "directories": {
+      "output": "release"
+    },
+    "files": [
+      "desktop/**/*",
+      "package.json"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Serula Nesting Pro PC"
+    }
+  }
+}
