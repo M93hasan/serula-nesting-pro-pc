@@ -10,7 +10,7 @@ on:
       - ".github/workflows/build-windows.yml"
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -30,9 +30,21 @@ jobs:
       - name: Build Windows installer
         run: npm run dist:win
 
-      - name: Upload installer
+      - name: Upload installer artifact
         uses: actions/upload-artifact@v4
         with:
           name: serula-nesting-pro-pc-windows
-          path: release/**
+          path: release/Serula-Nesting-Pro-PC-Setup.exe
           if-no-files-found: error
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: pc-v0.1.0
+          name: Serula Nesting Pro PC v0.1.0
+          body: |
+            Serula Nesting Pro PC Windows x64 installer.
+            Ana Serula uygulamasının canlı sürümünü masaüstü penceresinde açar.
+          make_latest: true
+          overwrite_files: true
+          files: release/Serula-Nesting-Pro-PC-Setup.exe
