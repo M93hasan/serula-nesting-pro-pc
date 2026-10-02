@@ -4,10 +4,11 @@
   "version": "0.1.0",
   "private": true,
   "description": "Serula Nesting Pro Windows desktop application",
+  "author": "Muhammet Hasanoğlu",
   "main": "desktop/main.cjs",
   "scripts": {
     "desktop:dev": "electron .",
-    "dist:win": "electron-builder --win nsis"
+    "dist:win": "electron-builder --win nsis --publish never"
   },
   "devDependencies": {
     "electron": "^38.2.0",
