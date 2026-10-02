@@ -1,37 +1,70 @@
-# Serula Nesting Pro - CorelDRAW Macro
+# Serula Nesting for CorelDRAW — Offline
 
-Bu makro CorelDRAW ile Serula Nesting Pro PC arasinda **yerel dosya koprusu** kurar. CorelDRAW'in internete erismesi gerekmez.
+Bu sürüm **tamamen CorelDRAW içinde** çalışır.
 
-## Hedef uyumluluk
+- İnternet gerekmez.
+- Serula web sitesi gerekmez.
+- Serula PC uygulaması gerekmez.
+- Harici EXE gerekmez.
+- WinAPI / 32-bit / 64-bit Declare kullanılmaz.
+- Makro CorelDRAW'un kendi VBA ve Shape/ShapeRange API'lerini kullanır.
 
-- CorelDRAW X7 / X8
-- CorelDRAW 2017-2026
-- 32-bit ve 64-bit VBA ortamlari
+## Hedef sürümler
 
-Kod WinAPI kullanmaz ve Corel surumune ozel DLL referansi istemez. X5/X6 gibi daha eski surumlerde de kullanilan temel Export/Import API'lerine dayanir, ancak bunlar resmi test hedefi degildir.
+Makro, CorelDRAW X7 döneminde bulunan temel VBA API'leri üzerine kurulmuştur ve güncel CorelDRAW sürümlerinde de bulunan aynı API'leri kullanır. Bu nedenle eski ve yeni CorelDRAW kurulumlarında geniş uyumluluk hedeflenir.
+
+## Ne yapar?
+
+1. CorelDRAW'da seçili her **üst nesneyi** bir parça kabul eder.
+2. Parçaların ölçülerini değiştirmez.
+3. Ayarlara göre 0° veya 0/90° döndürür.
+4. Yeni bir Corel sayfası açar.
+5. Parçaları Bottom-Left tabanlı yerleşimle dizer.
+6. Rulo modunda kullanılan uzunluğa göre sayfa boyunu ayarlar.
+7. Plaka modunda sığmayan parçaları otomatik olarak 2., 3. ve sonraki sayfalara geçirir.
+8. Başlangıç köşesi LB / RB / LT / RT seçilebilir.
+9. Orijinal çizimi silmez; nesting için kopya üretir.
+
+## Önemli
+
+Bir ayakkabı parçasının dış konturu, iç delikleri, çizgileri veya yazıları birlikte hareket edecekse bunları CorelDRAW'da **grup** yapın. Makro her seçili üst nesneyi tek parça olarak taşır/döndürür; grup içindeki detaylar bozulmaz.
 
 ## Makrolar
 
-- `Serula_Gonder`: Corel'de secili objeleri DXF olarak yerel klasore aktarir ve Serula Nesting Pro PC'yi acarak dosyayi otomatik yukler.
-- `Serula_Sonucu_Al`: Serula'da indirilen nesting sonucunu aktif Corel belgesine geri alir.
-- `Serula_Klasoru_Ac`: Yerel aktarim klasorunu acar.
+### Serula_Ayarlar
+
+Şunları Corel içinde ayarlar ve hatırlar:
+
+- Rulo / plaka
+- Malzeme genişliği
+- Plaka uzunluğu
+- Parça aralığı
+- Margin
+- Dönüş modu
+- Başlangıç köşesi
+
+Varsayılan parça aralığı: **0.3 mm**
+
+Varsayılan margin: **5 mm**
+
+### Serula_Nesting
+
+Seçili parçaları yeni Corel sayfasında yerleştirir.
+
+### Serula_Bilgi
+
+Kurulu macro sürümünü gösterir.
 
 ## Kurulum
 
-1. Serula Nesting Pro PC'yi kurun ve en az bir kez acin.
-2. CorelDRAW'da VBA/Visual Basic for Applications ozelliginin kurulu oldugundan emin olun.
-3. CorelDRAW Macro Manager / Visual Basic Editor'u acin.
-4. GlobalMacros veya kendi GMS projenizde bir module `SerulaNesting.bas` dosyasini import edin.
-5. Isterseniz `Serula_Gonder` ve `Serula_Sonucu_Al` makrolarini toolbar butonlarina atayin.
+1. CorelDRAW'da Macro Manager / Visual Basic Editor'u açın.
+2. GlobalMacros veya kendi GMS projenize yeni Module ekleyin.
+3. `SerulaNesting.bas` dosyasını Import edin.
+4. İlk kullanımda `Serula_Ayarlar` çalıştırın.
+5. İsterseniz `Serula_Nesting` komutunu Corel toolbar'a tek tuş olarak ekleyin.
 
-Menu adlari Corel surumune gore Tools > Macros, Tools > Scripts veya Macro Manager olarak gorunebilir.
+Corel sürümüne göre menü adı **Tools > Macros**, **Macro Manager**, **Scripts** veya **Visual Basic** olarak görünebilir.
 
-## Kullanim
+## Nesting motoru notu
 
-1. CorelDRAW'da nesting'e gidecek parcalari secin.
-2. `Serula_Gonder` calistirin.
-3. Serula PC acilir ve DXF otomatik ice aktarilir.
-4. Serula'da nesting yapin ve **DXF Indir**'e basin.
-5. Corel'e donun ve `Serula_Sonucu_Al` calistirin.
-
-Tum Corel <-> Serula dosya aktarimi yereldir. DXF'ler kullanici profilindeki `SerulaNesting\CorelBridge` klasorunde tutulur.
+Bu ilk tamamen-Corel sürümünde yerleşim güvenliği için parçaların Corel bounding box'ları kullanılır. Bu nedenle çakışma üretmez; ancak web Serula'daki gerçek içbükey/NFP motoru kadar sıkı fire doldurmaz. Sonraki aşamada Corel-içi motor gerçek kontur çarpışmasıyla geliştirilebilir.
