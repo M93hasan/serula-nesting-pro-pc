@@ -40,6 +40,7 @@
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
       "shortcutName": "Serula Nesting Pro PC"
-    }
+    },
+    "artifactName": "Serula-Nesting-Pro-PC-Setup.${ext}"
   }
 }
