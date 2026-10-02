@@ -2,13 +2,22 @@ const { app, BrowserWindow, shell, session } = require('electron');
 
 const SERULA_URL = process.env.SERULA_URL || 'https://serula.site/';
 
-function isSerulaUrl(url) {
+function hostnameOf(url) {
   try {
-    const parsed = new URL(url);
-    return parsed.hostname === 'serula.site' || parsed.hostname.endsWith('.serula.site');
+    return new URL(url).hostname;
   } catch {
-    return false;
+    return '';
   }
+}
+
+function isSerulaUrl(url) {
+  const host = hostnameOf(url);
+  return host === 'serula.site' || host.endsWith('.serula.site');
+}
+
+function isAllowedAuthPopup(url) {
+  const host = hostnameOf(url);
+  return host === 'accounts.google.com' || host.endsWith('.google.com');
 }
 
 async function createWindow() {
@@ -29,8 +38,18 @@ async function createWindow() {
   });
 
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (isSerulaUrl(url)) {
-      return { action: 'allow' };
+    if (isSerulaUrl(url) || isAllowedAuthPopup(url)) {
+      return {
+        action: 'allow',
+        overrideBrowserWindowOptions: {
+          autoHideMenuBar: true,
+          webPreferences: {
+            contextIsolation: true,
+            nodeIntegration: false,
+            sandbox: true
+          }
+        }
+      };
     }
     void shell.openExternal(url);
     return { action: 'deny' };
