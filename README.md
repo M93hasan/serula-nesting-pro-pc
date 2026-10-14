@@ -16,9 +16,9 @@ Canlı uygulama:
 
 Web tarafında yayınlanan güncellemeler PC uygulamasına yeni EXE kurulmadan yansır. PC kabuğu veya Windows paketleme yapısı değiştiğinde yeni EXE üretilir.
 
-## Otomatik CorelDRAW / RDWorks köprüsü (PC v0.1.2)
+## Otomatik CorelDRAW / RDWorks köprüsü (PC v0.1.3)
 
-Yeni Windows kurulum paketi Serula Bridge v1.2'i içerir (`desktop/bridge/`), internetten ek kurulum betiği indirmeyi gerektirmez.
+Yeni Windows kurulum paketi Serula Bridge v1.3'i içerir (`desktop/bridge/`), internetten ek kurulum betiği indirmeyi gerektirmez.
 
 - PC programı açıldığında Windows için `SetupBundledBridge.ps1` otomatik başlar.
 - Köprü kullanıcı dizinine (`%LOCALAPPDATA%\\SerulaBridge`) kurulur ve `127.0.0.1:43842` bağlantısında çalışır.

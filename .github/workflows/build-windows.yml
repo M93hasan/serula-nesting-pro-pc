@@ -54,12 +54,12 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: pc-v0.1.2
-          name: Serula Nesting Pro PC v0.1.2
+          tag_name: pc-v0.1.3
+          name: Serula Nesting Pro PC v0.1.3
           body: |
             Serula Nesting Pro PC Windows x64 installer.
             Ana Serula uygulamasinin canli surumunu masaustu penceresinde acar.
-            CorelDRAW / RDWorks Serula Bridge v1.2 kurulum paketine dahildir.
+            CorelDRAW / RDWorks Serula Bridge v1.3 kurulum paketine dahildir.
             Ilk calistirmada yerel aktarim koprusu otomatik kurulur ve baslatilir.
           make_latest: true
           overwrite_files: true
