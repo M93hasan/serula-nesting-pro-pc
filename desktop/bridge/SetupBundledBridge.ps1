@@ -19,7 +19,7 @@ function Log([string]$message) {
 function IsHealthy {
   try{
     $r=Invoke-RestMethod -Uri $endpoint -TimeoutSec 2
-    return ($r.ok -eq $true -and $r.service -eq 'serula-bridge' -and $r.version -eq $version)
+    return ($r.ok -eq $true -and $r.service -eq 'serula-bridge' -and [version]$r.version -ge [version]$version)
   }catch{return $false}
 }
 function OwnBridgeProcess {
@@ -36,6 +36,14 @@ try{
   if(!(Test-Path -LiteralPath $src -PathType Leaf)){throw 'Bundled bridge source is missing.'}
   $changed=(!(Test-Path -LiteralPath $dst)) -or
     ((Get-FileHash -LiteralPath $src -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $dst -Algorithm SHA256).Hash)
+  # A bundled installer must never downgrade a newer bridge that was
+  # installed independently (including after a later application update).
+  if(Test-Path -LiteralPath $dst -PathType Leaf){
+    $installedText=Get-Content -LiteralPath $dst -Raw -ErrorAction SilentlyContinue
+    if($installedText -match "service='serula-bridge';version='([0-9]+\.[0-9]+)'"){
+      if([version]$matches[1] -gt [version]$version){$changed=$false}
+    }
+  }
   if($changed) {
     foreach($old in @(OwnBridgeProcess)){
       Log ('Replacing previous bridge PID: '+$old.ProcessId)
