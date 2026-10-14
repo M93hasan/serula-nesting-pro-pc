@@ -16,16 +16,16 @@ Canlı uygulama:
 
 Web tarafında yayınlanan güncellemeler PC uygulamasına yeni EXE kurulmadan yansır. PC kabuğu veya Windows paketleme yapısı değiştiğinde yeni EXE üretilir.
 
-## Otomatik CorelDRAW / RDWorks köprüsü (PC v0.1.1)
+## Otomatik CorelDRAW / RDWorks köprüsü (PC v0.1.2)
 
-Yeni Windows kurulum paketi Serula Bridge v1.1'i içerir (`desktop/bridge/`), internetten ek kurulum betiği indirmeyi gerektirmez.
+Yeni Windows kurulum paketi Serula Bridge v1.2'i içerir (`desktop/bridge/`), internetten ek kurulum betiği indirmeyi gerektirmez.
 
 - PC programı açıldığında Windows için `SetupBundledBridge.ps1` otomatik başlar.
 - Köprü kullanıcı dizinine (`%LOCALAPPDATA%\\SerulaBridge`) kurulur ve `127.0.0.1:43842` bağlantısında çalışır.
 - İlk kullanımda Windows, localhost URL rezervasyonu için **bir kez yönetici onayı** isteyebilir.
 - Oturum açılışında otomatik başlatma kısayolu oluşturulur. Daha sonra PC uygulamasını kapatsanız da köprü çalışabilir.
 - Elle yeniden başlatmak veya onarmak için kurulu dosyalar içinde `resources/serula-bridge/Serula-Kur.cmd` bulunur.
-- Sağlık kontrolü: http://127.0.0.1:43842/health (`version=1.1`).
+- Sağlık kontrolü: http://127.0.0.1:43842/health (`version=1.2`).
 - Kurulum günlüğü: `%LOCALAPPDATA%\\SerulaBridge\\installation.log`.
 - Köprü CorelDRAW'a COM ile aktarır, RDWorks için odak kontrollü arayüz otomasyonu kullanır; RDWorks'te çizimin gerçekten açıldığını kontrol edin.
 - Admin panelinde CorelDRAW/RDWorks aktarım izinlerinin açık olması gerekir.
