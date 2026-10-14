@@ -27,6 +27,20 @@ jobs:
       - name: Install dependencies
         run: npm install
 
+      - name: Verify bundled bridge scripts (PowerShell 5.1)
+        shell: powershell
+        run: |
+          foreach ($file in @('desktop/bridge/SerulaTransferBridge.ps1', 'desktop/bridge/SetupBundledBridge.ps1')) {
+            $parseErrors = $null
+            $tokens = $null
+            [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file), [ref]$tokens, [ref]$parseErrors) | Out-Null
+            if ($parseErrors.Count -gt 0) { throw "PowerShell syntax error in $file : $($parseErrors | Out-String)" }
+          }
+          if (-not (Test-Path 'desktop/bridge/Serula-Kur.cmd')) { throw 'Bundled installer command missing' }
+
+      - name: Validate Electron main process
+        run: node --check desktop/main.cjs
+
       - name: Build Windows installer
         run: npm run dist:win
 
@@ -40,11 +54,13 @@ jobs:
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: pc-v0.1.0
-          name: Serula Nesting Pro PC v0.1.0
+          tag_name: pc-v0.1.1
+          name: Serula Nesting Pro PC v0.1.1
           body: |
             Serula Nesting Pro PC Windows x64 installer.
-            Ana Serula uygulamasının canlı sürümünü masaüstü penceresinde açar.
+            Ana Serula uygulamasinin canli surumunu masaustu penceresinde acar.
+            CorelDRAW / RDWorks Serula Bridge v1.1 kurulum paketine dahildir.
+            Ilk calistirmada yerel aktarim koprusu otomatik kurulur ve baslatilir.
           make_latest: true
           overwrite_files: true
           files: release/Serula-Nesting-Pro-PC-Setup.exe

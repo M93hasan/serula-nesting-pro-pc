@@ -1,6 +1,29 @@
 const { app, BrowserWindow, shell, session } = require('electron');
+const fs = require('fs');
+const path = require('path');
+const { spawn } = require('child_process');
 
 const SERULA_URL = process.env.SERULA_URL || 'https://serula.site/';
+
+function installAndStartBundledTransferBridge() {
+  if (process.platform !== 'win32') return;
+  const resourceDir = app.isPackaged
+    ? path.join(process.resourcesPath, 'serula-bridge')
+    : path.join(__dirname, 'bridge');
+  const installer = path.join(resourceDir, 'SetupBundledBridge.ps1');
+  if (!fs.existsSync(installer)) {
+    console.warn('Serula Windows transfer bridge setup is missing:', installer);
+    return;
+  }
+  // Install from packaged files, not from an untrusted remote download.
+  // Windows may show its normal one-time elevation dialog for localhost URLACL.
+  const child = spawn('powershell.exe', [
+    '-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass',
+    '-WindowStyle', 'Hidden', '-File', installer
+  ], { cwd: resourceDir, detached: true, windowsHide: true, stdio: 'ignore' });
+  child.on('error', error => console.error('Serula Bridge startup failed:', error));
+  child.unref();
+}
 
 function hostnameOf(url) {
   try {
@@ -66,7 +89,12 @@ async function createWindow() {
 }
 
 app.whenReady().then(async () => {
-  session.defaultSession.setPermissionRequestHandler((_webContents, permission, callback) => {
+  installAndStartBundledTransferBridge();
+  session.defaultSession.setPermissionRequestHandler((webContents, permission, callback) => {
+    if (permission === 'local-network-access') {
+      callback(isSerulaUrl(webContents.getURL()));
+      return;
+    }
     const allowed = new Set([
       'media',
       'display-capture',
