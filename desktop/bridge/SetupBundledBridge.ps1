@@ -9,7 +9,7 @@ $dst=Join-Path $root 'SerulaTransferBridge.ps1'
 $startup=Join-Path ([Environment]::GetFolderPath('Startup')) 'Serula Bridge.lnk'
 $endpoint='http://127.0.0.1:43842/health'
 $prefix='http://127.0.0.1:43842/'
-$version='1.3'
+$version='1.4'
 [IO.Directory]::CreateDirectory($root)|Out-Null
 function Log([string]$message) {
   $line='['+(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')+'] '+$message
