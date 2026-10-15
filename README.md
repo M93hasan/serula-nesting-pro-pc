@@ -46,7 +46,7 @@ Node.js 22 ve Windows için:
 
 Kurulum dosyası release/Serula-Nesting-Pro-PC-Setup.exe altında oluşur. GitHub Actions, PC ve web kaynaklarını ayrı checkout adımlarıyla alır ve offline derlemeyi Windows üzerinde yapar.
 
-npm run offline:prepare, web kaynağının **geçici kopyası** üstüne çevrimdışı PC giriş dosyasını ve yerel kayıt etiketlerini uygular. Ardından tip kontrolü / WASM parmak izi doğrulaması / Vite üretim derlemesi çalışır ve offline-web/ dosyalarını üretir. Derleme için internet veya önceden indirilmiş bağımlılıklar gerekebilir; **kurulmuş program için gerekmez**.
+npm run offline:prepare, web kaynağının **geçici kopyası** üstüne çevrimdışı PC giriş dosyasını ve yerel kayıt etiketlerini uygular. Ardından tip kontrolü / mevcut dört WASM ikili dosyasının varlık kontrolü / Vite üretim derlemesi çalışır ve offline-web/ dosyalarını üretir. Web deposundaki prebuilt.sha256 parmak izi güncel kaynakla uyuşmadığı için PC derlemesi mevcut WASM ikili dosyalarını değiştirmeden kullanır; bu uyumsuzluk ayrıca giderilmelidir. Derleme için internet veya önceden indirilmiş bağımlılıklar gerekebilir; **kurulmuş program için gerekmez**.
 
 ## Güvenlik ve mimari
 
