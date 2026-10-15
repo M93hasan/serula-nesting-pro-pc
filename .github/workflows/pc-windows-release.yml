@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - "desktop/**"
+      - "scripts/**"
+      - "tests/**"
       - "package.json"
       - ".github/workflows/pc-windows-release.yml"
   workflow_dispatch:
@@ -15,9 +17,17 @@ permissions:
 jobs:
   build-and-release:
     runs-on: windows-latest
-    timeout-minutes: 40
+    timeout-minutes: 45
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout PC shell
+        uses: actions/checkout@v4
+      - name: Checkout live web source for offline packaging
+        uses: actions/checkout@v4
+        with:
+          repository: M93hasan/nesting
+          ref: main
+          path: web-source
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: "22"
@@ -38,9 +48,17 @@ jobs:
           if ($scriptText -notmatch "version='1.5'" -or $scriptText -notmatch "Open-RDWorksImportPicker" -or $scriptText -notmatch "Try-RDWorksClassicPicker") {
             throw "Bridge version or RDWorks fallback missing."
           }
-      - name: Install desktop dependencies
+      - name: Install PC dependencies
         run: npm install --no-audit --no-fund
-      - name: Package Windows installer
+      - name: Install web dependencies
+        run: npm ci --prefix web-source/web --no-audit --no-fund
+      - name: Validate offline desktop code and storage
+        run: |
+          node --check desktop/main.cjs
+          node --check desktop/offline-server.cjs
+          node --check scripts/prepare-offline.cjs
+          npm run offline:test
+      - name: Package Windows installer with local UI and WASM engine
         run: npm run dist:win
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
@@ -62,8 +80,10 @@ jobs:
           tag_name: pc-v${{ steps.meta.outputs.version }}
           name: Serula Nesting Pro PC v${{ steps.meta.outputs.version }}
           body: |
-            Serula Bridge 1.5 — RDWorksV8 desktop shortcut discovery and assisted Ctrl+V in the verified DXF Import dialog.
-            Source DXF geometry and nesting engine remain unchanged.
-            Verify imported drawing, dimensions and cutting layers before using the laser.
+            Offline Windows application: React interface and Rust/WASM nesting engine are bundled.
+            No login or internet is required for DXF import, nesting or DXF export.
+            Projects and export history are saved to this PC. Cloud synchronization, online login,
+            live support and server-ticket-dependent CorelDRAW/RDWorks transfers are not available offline.
+            The web repository and nesting calculations have not been modified by this PC packaging change.
           files: release/Serula-Nesting-Pro-PC-Setup.exe
           fail_on_unmatched_files: true
