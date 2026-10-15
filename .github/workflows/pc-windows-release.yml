@@ -88,7 +88,8 @@ jobs:
             pending local edits; otherwise asks before switching to prevent losing work.
             Offline saves and online cloud history remain separate and are never silently merged.
             Selected rotation options retain clear blue active states in both modes.
-            Web and Windows application release versions are aligned at 0.1.12.
+            RDWorks direct transfer is hidden because reliable one-click import is unavailable; CorelDRAW remains available.
+            Web and Windows application release versions are aligned at 0.1.13.
             The web repository and nesting engine are unchanged.
           files: release/Serula-Nesting-Pro-PC-Setup.exe
           fail_on_unmatched_files: true
