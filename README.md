@@ -1,49 +1,61 @@
-# Serula Nesting Pro PC
+# Serula Nesting Pro PC (Windows) — Çevrimdışı
 
-Windows masaüstü sürümü.
+Bu depo **Serula Nesting Pro'nun bağımsız Windows sürümüdür**. PC sürümü artık serula.site adresini açan bir tarayıcı kabuğu değildir. React arayüzü, DXF işleme kodu ve önceden derlenmiş Rust/WebAssembly Sparrow yerleşim motoru kurulum paketinin içindedir.
 
-Bu repo, Serula Nesting Pro'nun PC kabuğunu içerir. Uygulama masaüstünde ayrı bir Windows penceresi olarak açılır ve canlı Serula sürümünü kullanır.
+## PC v0.1.6
 
-## Güncelleme modeli
+- **İnternet gerektirmez:** Program açılışı, DXF / SVG / PLT içe aktarma, rulo/plaka nesting hesaplama ve DXF indirme aynı bilgisayarda yapılır.
+- **Hesap girişi gerekmez:** Çevrimdışı kullanım için sunucu oturumu, kredi veya çevrimiçi DXF onayı beklenmez.
+- **Projeler bilgisayara kaydedilir:** Son proje offline-data/autosave.json olarak; DXF geçmişi ve karşılık gelen proje JSON'ları yerel dosyalar olarak saklanır. Son **50** DXF çıktısı geçmişte tutulur.
+- **Yerleşim motoruna dokunulmaz:** Windows paketi M93hasan/nesting kaynağını derleme anında ayrı olarak alır; yalnızca PC'ye özel giriş ve çevrimdışı veri erişim katmanını hazırlar. Web deposunun kaynak dosyaları **değiştirilmez**.
+- **İnternetli web özellikleri çevrimdışı değildir:** Bulut senkronizasyonu, web hesabı, canlı destek, admin paneli ve sunucu bileti doğrulayan CorelDRAW/RDWorks aktarım köprüsü offline PC'de kullanılamaz. DXF'yi indirip CorelDRAW veya RDWorks içinde normal **İçe Aktar** yoluyla açabilirsiniz.
+- **Güncelleme şekli:** Çevrimdışı PC sürümünün güncellenmesi için yeni kurulum paketi gerekir. Web sitesinin sonraki değişiklikleri kurulu EXE'ye otomatik yansımaz.
 
-Ana kaynak:
+## İndirme ve kullanım
 
-- https://github.com/M93hasan/nesting
+[**Windows kurulum dosyası — Releases**](https://github.com/M93hasan/serula-nesting-pro-pc/releases/latest)
 
-Canlı uygulama:
+Yeni offline sürümün sürüm etiketi **pc-v0.1.6** olmalıdır. Önceki pc-v0.1.5 ve daha eski kurulumlar canlı serula.site sitesini açabilir; bunlar offline sürüm değildir.
 
-- https://serula.site
+İnterneti kapatarak test: programı açın; bir DXF içe aktarın, nesting çalıştırın, DXF çıktısını kaydedin, programı kapatıp yeniden açın ve **Geçmiş** kaydını kontrol edin.
 
-Web tarafında yayınlanan güncellemeler PC uygulamasına yeni EXE kurulmadan yansır. PC kabuğu veya Windows paketleme yapısı değiştiğinde yeni EXE üretilir.
+## Verilerin saklandığı yer
 
-## Otomatik CorelDRAW / RDWorks köprüsü (PC v0.1.4)
+Windows'ta genel olarak:
 
-Yeni Windows kurulum paketi Serula Bridge v1.4'i içerir (`desktop/bridge/`), internetten ek kurulum betiği indirmeyi gerektirmez.
+    %APPDATA%\serula-nesting-pro-pc\offline-data\
 
-- PC programı açıldığında Windows için `SetupBundledBridge.ps1` otomatik başlar.
-- Köprü kullanıcı dizinine (`%LOCALAPPDATA%\\SerulaBridge`) kurulur ve `127.0.0.1:43842` bağlantısında çalışır.
-- İlk kullanımda Windows, localhost URL rezervasyonu için **bir kez yönetici onayı** isteyebilir.
-- Oturum açılışında otomatik başlatma kısayolu oluşturulur. Daha sonra PC uygulamasını kapatsanız da köprü çalışabilir.
-- Elle yeniden başlatmak veya onarmak için kurulu dosyalar içinde `resources/serula-bridge/Serula-Kur.cmd` bulunur.
-- Sağlık kontrolü: http://127.0.0.1:43842/health (`version=1.4`).
-- Kurulum günlüğü: `%LOCALAPPDATA%\\SerulaBridge\\installation.log`.
-- Köprü CorelDRAW'a COM ile aktarır, RDWorks için odak kontrollü arayüz otomasyonu kullanır; RDWorks'te çizimin gerçekten açıldığını kontrol edin.
-- Admin panelinde CorelDRAW/RDWorks aktarım izinlerinin açık olması gerekir.
+Kesin konum Electron app.getPath('userData')/offline-data değeridir; işletim sistemi ve geçmiş kurulum yapılandırmasına göre değişebilir. Burada manifest.json, autosave.json ve exports/ klasörü vardır. Bu klasörün yedeğini almak, yerel proje ve çıktı geçmişini korur. Bu dosyalar buluta otomatik yüklenmez.
 
-Bu köprü mevcut web uygulamasının API bilet doğrulaması ile çalışır; nesting yerleştirme motorunu değiştirmez. Windows dışındaki platformlarda kurulmaz.
+## Geliştirme ve kurulum paketi üretme
 
-## Yerel çalıştırma
+Node.js 22 ve Windows için:
 
-```bash
-npm install
-npm run desktop:dev
-```
+1. Bu PC deposunu indirin.
+2. Web kaynağını web-source/ altına M93hasan/nesting olarak yerleştirin (örn. git clone https://github.com/M93hasan/nesting.git web-source) veya SERULA_WEB_DIR ortam değişkeninde web klasörü yolunu tanımlayın.
+3. Bağımlılıkları kurun:
 
-## Windows kurulum dosyası
+       npm install
+       npm ci --prefix web-source/web
 
-```bash
-npm install
-npm run dist:win
-```
+4. Test ve derleme:
 
-Çıktı `release/` klasöründe oluşur.
+       npm run offline:test
+       npm run desktop:dev
+       npm run dist:win
+
+Kurulum dosyası release/Serula-Nesting-Pro-PC-Setup.exe altında oluşur. GitHub Actions, PC ve web kaynaklarını ayrı checkout adımlarıyla alır ve offline derlemeyi Windows üzerinde yapar.
+
+npm run offline:prepare, web kaynağının **geçici kopyası** üstüne çevrimdışı PC giriş dosyasını ve yerel kayıt etiketlerini uygular. Ardından tip kontrolü / WASM parmak izi doğrulaması / Vite üretim derlemesi çalışır ve offline-web/ dosyalarını üretir. Derleme için internet veya önceden indirilmiş bağımlılıklar gerekebilir; **kurulmuş program için gerekmez**.
+
+## Güvenlik ve mimari
+
+- Electron yalnızca 127.0.0.1 adresinde rastgele bağlantı noktasına bağlanan Node HTTP sunucusunu açar; siteye bağlanmaz ve dış ağ isteklerini engeller.
+- Yerel API, rastgele üretilmiş HttpOnly, SameSite=Strict oturum çerezi ile korunur. Windows dosyaları web içeriklerine doğrudan açılmaz.
+- Cross-Origin-Opener-Policy ve Cross-Origin-Embedder-Policy üstbilgileri, destekleyen bilgisayarlarda WASM worker/SharedArrayBuffer kullanımı için eklenmiştir.
+- Nesting geometri, dönüş, rulo/plaka, DXF varlık koruma ve hesaplama işleyişi web kaynağıyla aynıdır.
+- Lazer üretiminde dosyayı CorelDRAW veya RDWorks'e aldıktan sonra parça adedi, gerçek ölçüler ve kesim katmanlarını kontrol edin.
+
+**Web projesi:** https://github.com/M93hasan/nesting
+
+**Mevcut Windows köprüsü:** desktop/bridge/ altında muhafaza edilir; çevrimdışı modda otomatik kurulmaz, çünkü sunucu bileti doğrulaması internete bağlıdır.
