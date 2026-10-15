@@ -87,6 +87,8 @@ jobs:
             After connectivity returns, automatically switches online when there are no
             pending local edits; otherwise asks before switching to prevent losing work.
             Offline saves and online cloud history remain separate and are never silently merged.
+            Selected rotation options retain clear blue active states in both modes.
+            Web and Windows application release versions are aligned at 0.1.11.
             The web repository and nesting engine are unchanged.
           files: release/Serula-Nesting-Pro-PC-Setup.exe
           fail_on_unmatched_files: true
