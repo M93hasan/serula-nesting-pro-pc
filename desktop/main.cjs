@@ -1,8 +1,10 @@
 'use strict';
 const { app, BrowserWindow, Menu, dialog, shell, session } = require('electron');
 const path = require('node:path');
+const fs = require('node:fs');
 const { createOfflineServer } = require('./offline-server.cjs');
 const { ONLINE_URL, CHECK_INTERVAL_MS, probeSerula, nextMode } = require('./hybrid-mode.cjs');
+const choiceCss = fs.readFileSync(path.join(__dirname, 'selection-colors.css'), 'utf8');
 
 let localServer, localOrigin, active = null, onlineWin, localWin;
 let switching = false, polling = false, quitting = false;
@@ -72,6 +74,15 @@ function createWindow(mode) {
     }
   });
   win.on('page-title-updated', e => { e.preventDefault(); win.setTitle(label(mode)); });
+  // The web site's late global blue-button rule overrides selected controls.
+  // Apply this purely visual CSS in both hybrid windows, without touching the
+  // protected nesting website repo or changing nesting logic.
+  win.webContents.on('did-finish-load', () => {
+    void win.webContents.insertCSS(choiceCss, { cssOrigin: 'user' }).catch(error => {
+      console.warn('Serula selected button CSS:', error);
+    });
+  });
+
   win.webContents.setWindowOpenHandler(({ url }) => {
     if (mode === 'online' && (onlineURL(url) || authURL(url))) {
       return { action: 'allow', overrideBrowserWindowOptions: {
