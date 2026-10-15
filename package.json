@@ -1,14 +1,16 @@
 {
   "name": "serula-nesting-pro-pc",
   "productName": "Serula Nesting Pro PC",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "private": true,
-  "description": "Serula Nesting Pro Windows desktop application",
+  "description": "Serula Nesting Pro offline Windows desktop application",
   "author": "Muhammet Hasanoğlu",
   "main": "desktop/main.cjs",
   "scripts": {
-    "desktop:dev": "electron .",
-    "dist:win": "electron-builder --win nsis --publish never"
+    "offline:prepare": "node scripts/prepare-offline.cjs",
+    "offline:test": "node --test tests/offline-server.test.cjs",
+    "desktop:dev": "npm run offline:prepare && electron .",
+    "dist:win": "npm run offline:prepare && electron-builder --win nsis --publish never"
   },
   "devDependencies": {
     "electron": "^38.2.0",
@@ -46,6 +48,13 @@
       {
         "from": "desktop/bridge",
         "to": "serula-bridge",
+        "filter": [
+          "**/*"
+        ]
+      },
+      {
+        "from": "offline-web",
+        "to": "serula-offline-web",
         "filter": [
           "**/*"
         ]
