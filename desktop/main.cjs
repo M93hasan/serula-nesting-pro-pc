@@ -1,108 +1,235 @@
 'use strict';
-const { app, BrowserWindow, shell, session } = require('electron');
-const fs = require('node:fs');
+const { app, BrowserWindow, Menu, dialog, shell, session } = require('electron');
 const path = require('node:path');
-const { spawn } = require('node:child_process');
 const { createOfflineServer } = require('./offline-server.cjs');
+const { ONLINE_URL, CHECK_INTERVAL_MS, probeSerula, nextMode } = require('./hybrid-mode.cjs');
 
-let offlineServer;
-let offlineOrigin;
+let localServer, localOrigin, active = null, onlineWin, localWin;
+let switching = false, polling = false, quitting = false;
+let failures = 0, successes = 0, prompted = false, timer;
 
-function installAndStartBundledTransferBridge() {
-  if (process.platform !== 'win32') return;
-  const resourceDir = app.isPackaged
-    ? path.join(process.resourcesPath, 'serula-bridge')
-    : path.join(__dirname, 'bridge');
-  const installer = path.join(resourceDir, 'SetupBundledBridge.ps1');
-  if (!fs.existsSync(installer)) return;
-  const child = spawn('powershell.exe', [
-    '-NoProfile', '-STA', '-ExecutionPolicy', 'Bypass',
-    '-WindowStyle', 'Hidden', '-File', installer
-  ], { cwd: resourceDir, detached: true, windowsHide: true, stdio: 'ignore' });
-  child.on('error', error => console.error('Serula Bridge startup failed:', error));
-  child.unref();
-}
-function isLocalAppUrl(raw) {
-  try { return new URL(raw).origin === offlineOrigin; } catch { return false; }
-}
-function openSafeExternal(raw) {
+function onlineURL(raw) {
   try {
     const url = new URL(raw);
-    if (['https:', 'http:', 'mailto:', 'tel:'].includes(url.protocol)) void shell.openExternal(url.toString());
-  } catch {}
+    return url.protocol === 'https:' && (url.hostname === 'serula.site' || url.hostname.endsWith('.serula.site'));
+  } catch { return false; }
 }
-async function createWindow() {
-  const win = new BrowserWindow({
-    title: 'Serula Nesting Pro PC — Çevrimdışı',
-    width: 1500,
-    height: 960,
-    minWidth: 1100,
-    minHeight: 700,
-    backgroundColor: '#0f1720',
-    autoHideMenuBar: true,
+function authURL(raw) {
+  try { const u = new URL(raw); return u.protocol === 'https:' && (u.hostname === 'accounts.google.com' || u.hostname.endsWith('.google.com')); }
+  catch { return false; }
+}
+function localURL(raw) {
+  try { return new URL(raw).origin === localOrigin; } catch { return false; }
+}
+function openExternal(raw) {
+  try { const u = new URL(raw); if (['https:', 'http:', 'mailto:', 'tel:'].includes(u.protocol)) void shell.openExternal(u.toString()); }
+  catch {}
+}
+function label(mode) { return 'Serula Nesting Pro PC — ' + (mode === 'online' ? 'Çevrimiçi' : 'Çevrimdışı'); }
+function windowFor(mode) { return mode === 'online' ? onlineWin : mode === 'offline' ? localWin : null; }
+
+// This function executes in serula.site's page, not in the Node/Electron context.
+function readOnlineRecovery() {
+  return new Promise(resolve => {
+    try {
+      const request = indexedDB.open('sparrow-project', 1);
+      request.onupgradeneeded = () => request.result.createObjectStore('recovery');
+      request.onerror = () => resolve(null);
+      request.onsuccess = () => {
+        const db = request.result, tx = db.transaction('recovery', 'readonly');
+        const item = tx.objectStore('recovery').get('latest');
+        item.onsuccess = () => {
+          let json = null;
+          try { json = item.result ? JSON.stringify(item.result) : null; } catch {}
+          resolve(json);
+        };
+        item.onerror = () => resolve(null);
+        tx.oncomplete = () => db.close();
+        tx.onabort = () => { db.close(); resolve(null); };
+      };
+    } catch { resolve(null); }
+  });
+}
+async function captureOnlineRecovery() {
+  if (!onlineWin || onlineWin.isDestroyed() || !onlineURL(onlineWin.webContents.getURL())) return;
+  try {
+    const json = await Promise.race([
+      onlineWin.webContents.executeJavaScript('(' + readOnlineRecovery.toString() + ')()'),
+      new Promise(resolve => setTimeout(() => resolve(null), 2000))
+    ]);
+    if (typeof json === 'string') localServer.importOnlineRecovery(json);
+  } catch (e) { console.warn('Online recovery snapshot failed:', String(e)); }
+}
+function createWindow(mode) {
+  let win = windowFor(mode);
+  if (win && !win.isDestroyed()) return win;
+  win = new BrowserWindow({
+    show: false, title: label(mode), width: 1500, height: 960,
+    minWidth: 1100, minHeight: 700, backgroundColor: '#0f1720', autoHideMenuBar: true,
     webPreferences: {
-      contextIsolation: true,
-      nodeIntegration: false,
-      sandbox: true,
-      spellcheck: false
+      ...(mode === 'offline' ? { partition: 'persist:serula-pc-local' } : {}),
+      contextIsolation: true, nodeIntegration: false, sandbox: true, spellcheck: false
     }
   });
+  win.on('page-title-updated', e => { e.preventDefault(); win.setTitle(label(mode)); });
   win.webContents.setWindowOpenHandler(({ url }) => {
-    if (!isLocalAppUrl(url)) openSafeExternal(url);
-    // Do not open extra windows with access to the local offline session.
+    if (mode === 'online' && (onlineURL(url) || authURL(url))) {
+      return { action: 'allow', overrideBrowserWindowOptions: {
+        autoHideMenuBar: true,
+        webPreferences: { contextIsolation: true, nodeIntegration: false, sandbox: true }
+      } };
+    }
+    openExternal(url);
     return { action: 'deny' };
   });
-  win.webContents.on('will-navigate', (event, url) => {
-    if (!isLocalAppUrl(url)) {
-      event.preventDefault();
-      openSafeExternal(url);
+  win.webContents.on('will-navigate', (e, url) => {
+    if (mode === 'online' ? !onlineURL(url) : !localURL(url)) {
+      e.preventDefault(); openExternal(url);
     }
   });
-  await win.loadURL(offlineOrigin + '/');
+  if (mode === 'online') {
+    onlineWin = win;
+    win.webContents.on('did-fail-load', (_event, code, reason, _url, mainFrame) => {
+      if (mainFrame && code !== -3 && active === 'online' && !switching) {
+        console.warn('Online load failed:', reason);
+        void switchMode('offline');
+      }
+    });
+  } else localWin = win;
+  win.on('close', () => { if (!quitting) { quitting = true; app.quit(); } });
+  return win;
+}
+async function switchMode(target, { manual = false } = {}) {
+  if (switching || active === target) return false;
+  switching = true;
+  try {
+    const previous = active;
+    if (target === 'online') {
+      if (!await probeSerula()) return false;
+      if (previous === 'offline' && localServer.hasPendingLocalChanges()) {
+        if (!manual) return false;
+        const result = await dialog.showMessageBox(windowFor('offline'), {
+          type: 'warning', title: 'Yerel proje kaydınız var',
+          message: 'Çevrimdışı değişiklikler otomatik olarak buluta gönderilmez.',
+          detail: 'Yerel proje ve DXF geçmişi bilgisayarınızda korunur. Çevrimiçi ekranda başka bir proje olabilir; gerektiğinde Çevrimdışı moda geri dönebilirsiniz.',
+          buttons: ['Çevrimdışı kal', 'Çevrimiçi aç'],
+          defaultId: 0, cancelId: 0
+        });
+        if (result.response !== 1) return false;
+        localServer.acceptLocalChanges(); // Acknowledged; NOT cloud synchronized.
+      }
+    }
+    if (target === 'offline' && previous === 'online') {
+      // The online web app already saves recovery into IndexedDB. Back it up
+      // before hiding the online window; do not discard unsynced local files.
+      if (!localServer.hasPendingLocalChanges()) await captureOnlineRecovery();
+    }
+    const win = createWindow(target);
+    const firstLoad = !win.webContents.getURL();
+    if (firstLoad || (target === 'offline' && previous === 'online')) {
+      try { await win.loadURL(target === 'online' ? ONLINE_URL : localOrigin + '/'); }
+      catch (e) {
+        if (target === 'online') { console.warn('Online failed; retaining offline:', String(e)); return false; }
+        throw e;
+      }
+    }
+    const old = windowFor(previous);
+    if (old && !old.isDestroyed()) old.hide();
+    win.setTitle(label(target));
+    win.show(); win.focus();
+    active = target;
+    rebuildMenu();
+    return true;
+  } finally { switching = false; }
+}
+async function checkConnectivity() {
+  if (polling || switching || quitting) return;
+  polling = true;
+  try {
+    if (await probeSerula()) { successes++; failures = 0; }
+    else { failures++; successes = 0; prompted = false; }
+    // Two consecutive failures/recoveries avoid flapping on weak Wi-Fi.
+    if (active === 'online' && failures >= 2) await switchMode('offline');
+    if (active === 'offline' && successes >= 2) {
+      if (nextMode('offline', true, localServer.hasPendingLocalChanges()) === 'online') {
+        await switchMode('online');
+      } else if (!prompted) {
+        prompted = true;
+        const result = await dialog.showMessageBox(windowFor('offline'), {
+          type: 'info', title: 'İnternet bağlantısı geri geldi',
+          message: 'Çevrimiçi mod hazır, ancak çevrimdışı düzenlemeleriniz var.',
+          detail: 'Buluta sessizce yazmamak için otomatik geçiş duraklatıldı. Projeniz bilgisayarda güvende.',
+          buttons: ['Çevrimdışı devam et', 'Çevrimiçi geç'],
+          defaultId: 0, cancelId: 0
+        });
+        if (result.response === 1) await switchMode('online', { manual: true });
+      }
+    }
+  } catch (e) { console.warn('Connectivity check:', String(e)); }
+  finally { polling = false; }
+}
+function rebuildMenu() {
+  Menu.setApplicationMenu(Menu.buildFromTemplate([
+    { label: 'Serula', submenu: [
+      { label: 'Çevrimiçi aç', accelerator: 'CmdOrCtrl+Shift+O',
+        click: () => void switchMode('online', { manual: true }) },
+      { label: 'Çevrimdışı aç', accelerator: 'CmdOrCtrl+Shift+L',
+        click: () => void switchMode('offline', { manual: true }) },
+      { label: 'Bağlantıyı kontrol et', click: () => void checkConnectivity() },
+      { type: 'separator' }, { label: 'Yenile', role: 'reload' },
+      { label: 'Çıkış', role: 'quit' }
+    ] },
+    { label: 'Yardım', submenu: [
+      { label: 'Serula sitesi', click: () => openExternal(ONLINE_URL) },
+      { label: 'Yerel kayıt klasörü', click: () =>
+        void shell.openPath(path.join(app.getPath('userData'), 'offline-data')) }
+    ] }
+  ]));
 }
 app.whenReady().then(async () => {
   const assetsDir = app.isPackaged
     ? path.join(process.resourcesPath, 'serula-offline-web')
     : path.join(__dirname, '..', 'offline-web');
-  const dataDir = path.join(app.getPath('userData'), 'offline-data');
-  offlineServer = createOfflineServer({ assetsDir, dataDir });
-  offlineOrigin = await offlineServer.listen();
-  const ses = session.defaultSession;
-  await ses.cookies.set({
-    url: offlineOrigin,
-    name: 'serula_pc_session',
-    value: offlineServer.token,
-    path: '/',
-    httpOnly: true,
-    sameSite: 'strict'
-  });
-  // Program resources and requests remain on 127.0.0.1, even with no network.
-  // Explicitly clicked external hyperlinks may open in the user's browser.
-  ses.webRequest.onBeforeRequest((details, callback) => {
+  localServer = createOfflineServer({ assetsDir, dataDir: path.join(app.getPath('userData'), 'offline-data') });
+  localOrigin = await localServer.listen();
+  const localSession = session.fromPartition('persist:serula-pc-local');
+  await localSession.cookies.set({ url: localOrigin, name: 'serula_pc_session',
+    value: localServer.token, path: '/', httpOnly: true, sameSite: 'strict' });
+  // Separate sessions: offline can never fetch external URLs, while online
+  // keeps the prior defaultSession's Serula login and Google auth support.
+  localSession.webRequest.onBeforeRequest((details, callback) => {
     try {
-      const url = new URL(details.url);
-      if ((url.protocol === 'http:' || url.protocol === 'https:') && url.origin !== offlineOrigin)
+      const u = new URL(details.url);
+      if (['http:', 'https:'].includes(u.protocol) && u.origin !== localOrigin)
         return callback({ cancel: true });
     } catch {}
     callback({});
   });
-  ses.setPermissionRequestHandler((_webContents, permission, callback) => {
-    callback(permission === 'fullscreen');
+  session.defaultSession.setPermissionRequestHandler((contents, permission, callback) =>
+    callback(onlineURL(contents.getURL()) &&
+      new Set(['local-network-access', 'media', 'display-capture', 'notifications', 'fullscreen']).has(permission))
+  );
+  localSession.setPermissionRequestHandler((_c, permission, callback) =>
+    callback(permission === 'fullscreen')
+  );
+  rebuildMenu();
+  const reachable = await probeSerula();
+  const startup = nextMode('offline', reachable, localServer.hasPendingLocalChanges());
+  await switchMode(startup);
+  if (!active) await switchMode('offline');
+  timer = setInterval(() => void checkConnectivity(), CHECK_INTERVAL_MS);
+  app.on('activate', () => {
+    const win = windowFor(active);
+    if (win && !win.isDestroyed()) { win.show(); win.focus(); }
   });
-  // The legacy web-to-Windows bridge needs online ticket verification. Avoid
-  // automatic PowerShell installation in the offline-only PC mode.
-  if (process.env.SERULA_INSTALL_LEGACY_BRIDGE === '1') installAndStartBundledTransferBridge();
-  await createWindow();
-  app.on('activate', async () => {
-    if (BrowserWindow.getAllWindows().length === 0) await createWindow();
-  });
-}).catch(error => {
-  console.error('Serula offline startup error:', error);
+}).catch(e => {
+  console.error('Serula hybrid startup failed:', e);
+  dialog.showErrorBox('Serula başlatılamadı', String(e));
   app.quit();
 });
 app.on('before-quit', () => {
-  if (offlineServer) void offlineServer.close().catch(() => {});
+  quitting = true;
+  if (timer) clearInterval(timer);
+  if (localServer) void localServer.close().catch(() => {});
 });
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') app.quit();
-});
+app.on('window-all-closed', () => app.quit());
