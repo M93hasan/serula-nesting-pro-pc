@@ -2,6 +2,13 @@ name: Build Windows EXE
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - "desktop/**"
+      - "package.json"
+      - ".github/workflows/build-windows.yml"
+      - ".github/workflows/pc-windows-release.yml"
   push:
     branches: [main]
     paths:
@@ -10,7 +17,7 @@ on:
       - ".github/workflows/build-windows.yml"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
@@ -51,16 +58,5 @@ jobs:
           path: release/Serula-Nesting-Pro-PC-Setup.exe
           if-no-files-found: error
 
-      - name: Publish GitHub Release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: pc-v0.1.3
-          name: Serula Nesting Pro PC v0.1.3
-          body: |
-            Serula Nesting Pro PC Windows x64 installer.
-            Ana Serula uygulamasinin canli surumunu masaustu penceresinde acar.
-            CorelDRAW / RDWorks Serula Bridge v1.3 kurulum paketine dahildir.
-            Ilk calistirmada yerel aktarim koprusu otomatik kurulur ve baslatilir.
-          make_latest: true
-          overwrite_files: true
-          files: release/Serula-Nesting-Pro-PC-Setup.exe
+      # Releases are published only by pc-windows-release.yml so an older
+      # installer cannot overwrite the current latest version.

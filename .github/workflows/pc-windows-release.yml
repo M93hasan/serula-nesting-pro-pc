@@ -35,7 +35,7 @@ jobs:
             }
           }
           $scriptText = Get-Content "desktop/bridge/SerulaTransferBridge.ps1" -Raw
-          if ($scriptText -notmatch "version='1.4'" -or $scriptText -notmatch "Open-RDWorksImportPicker" -or $scriptText -notmatch "Try-RDWorksClassicPicker") {
+          if ($scriptText -notmatch "version='1.5'" -or $scriptText -notmatch "Open-RDWorksImportPicker" -or $scriptText -notmatch "Try-RDWorksClassicPicker") {
             throw "Bridge version or RDWorks fallback missing."
           }
       - name: Install desktop dependencies
@@ -62,7 +62,7 @@ jobs:
           tag_name: pc-v${{ steps.meta.outputs.version }}
           name: Serula Nesting Pro PC v${{ steps.meta.outputs.version }}
           body: |
-            Serula Bridge 1.4 — RDWorks File > Import, Ctrl+I and Windows dialog fallbacks.
+            Serula Bridge 1.5 — RDWorksV8 desktop shortcut discovery and assisted Ctrl+V in the verified DXF Import dialog.
             Source DXF geometry and nesting engine remain unchanged.
             Verify imported drawing, dimensions and cutting layers before using the laser.
           files: release/Serula-Nesting-Pro-PC-Setup.exe
