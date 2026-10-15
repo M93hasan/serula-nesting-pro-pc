@@ -27,7 +27,7 @@ function openExternal(raw) {
   try { const u = new URL(raw); if (['https:', 'http:', 'mailto:', 'tel:'].includes(u.protocol)) void shell.openExternal(u.toString()); }
   catch {}
 }
-function label(mode) { return 'Serula Nesting Pro PC — ' + (mode === 'online' ? 'Çevrimiçi' : 'Çevrimdışı'); }
+function label(mode) { return 'Serula Nesting Pro PC v' + app.getVersion() + ' — ' + (mode === 'online' ? 'Çevrimiçi' : 'Çevrimdışı'); }
 function windowFor(mode) { return mode === 'online' ? onlineWin : mode === 'offline' ? localWin : null; }
 
 // This function executes in serula.site's page, not in the Node/Electron context.
