@@ -173,6 +173,19 @@ function createOfflineServer({ assetsDir, dataDir }) {
             return respond(res, 200, { item: manifest.autosave });
           }
         }
+        // Preserve current project/autosave and usage counts; only erase history files.
+        if (pathname === '/api/exports' && req.method === 'DELETE') {
+          const removed = manifest.items.slice();
+          manifest.items = [];
+          if (removed.length) {
+            markOfflineChange();
+            saveManifest();
+            for (const old of removed) for (const ext of ['.dxf', '.json']) {
+              try { fs.unlinkSync(exportFile(old.id, ext)); } catch {}
+            }
+          }
+          return respond(res, 200, { ok: true, deleted: removed.length });
+        }
         if (pathname === '/api/exports' && req.method === 'GET')
           return respond(res, 200, { items: manifest.items });
         const match = /^\/api\/exports\/([1-9]\d*)$/.exec(pathname);

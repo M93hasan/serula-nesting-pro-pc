@@ -1,6 +1,6 @@
 # Serula Nesting Pro PC — Hibrit çevrimiçi / çevrimdışı
 
-Windows için **Serula Nesting Pro PC v0.1.11**. Aynı kurulumda **canlı web sürümü** ve **yerel offline sürüm** bulunur. Ana web deposu [M93hasan/nesting](https://github.com/M93hasan/nesting) ve nesting algoritması değiştirilmemiştir.
+Windows için **Serula Nesting Pro PC v0.1.12**. Aynı kurulumda **canlı web sürümü** ve **yerel offline sürüm** bulunur. Ana web deposu [M93hasan/nesting](https://github.com/M93hasan/nesting) ve nesting algoritması değiştirilmemiştir.
 
 ## Otomatik çalışma
 
@@ -44,7 +44,7 @@ Offline motorunun sürümü kurulum paketiyle gelir; web sitesi güncellense bil
 
 [**Serula Nesting Pro PC indirme sayfası**](https://github.com/M93hasan/serula-nesting-pro-pc/releases/latest)
 
-**Hibrit sürüm etiketi: pc-v0.1.11.** pc-v0.1.6 sadece offline sürümdü; yeni sürüm kurulduğunda varsayılan olarak bağlantı durumuna göre seçim yapılır.
+**Hibrit sürüm etiketi: pc-v0.1.12.** pc-v0.1.6 sadece offline sürümdü; yeni sürüm kurulduğunda varsayılan olarak bağlantı durumuna göre seçim yapılır.
 
 Kurulumdan sonra üç test önerilir: (1) internet açıkken hesabınla canlı web'e gir; (2) bağlantıyı kes, otomatik offline geçişte DXF içe alıp nesting ve export yap; (3) internet geldiğinde offline değişikliklerin korunmasına dair seçimi kontrol et. Sonrasında programı yeniden açıp offline geçmişi incele.
 

@@ -60,6 +60,23 @@ test('offline app serves local assets, protects API and persists autosave/export
     assert.equal((await request('/api/transfer/ticket', { method: 'POST' })).status, 503);
     assert.equal((await request('/api/exports/' + id, { method: 'DELETE' })).status, 200);
     assert.deepEqual((await (await request('/api/exports')).json()).items, []);
+    // Deleting all history must not reset the incremental export ID or the saved project.
+    const nextExport = await request('/api/export/authorize', {
+      method: 'POST', headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({ projectName: 'Proje B', sourceFileName: 'other.dxf',
+        fileName: 'second.dxf', dxf: '0\\nEOF', projectJson: '{"schemaVersion":1}' })
+    });
+    assert.equal(nextExport.status, 200);
+    const nextId = (await nextExport.json()).id;
+    assert.ok(nextId > id);
+    assert.equal((await fetch(origin + '/api/exports',{method:'DELETE'})).status,403);
+    const clear = await request('/api/exports',{method:'DELETE'});
+    assert.equal(clear.status, 200);
+    assert.equal((await clear.json()).deleted,1);
+    assert.deepEqual((await (await request('/api/exports')).json()).items,[]);
+    assert.equal((await request('/api/exports/'+nextId)).status,404);
+    assert.equal((await request('/api/project/autosave?content=1')).status,200);
+    assert.equal((await request('/api/exports',{method:'DELETE'})).status,200);
   } finally {
     await app.close();
   }
