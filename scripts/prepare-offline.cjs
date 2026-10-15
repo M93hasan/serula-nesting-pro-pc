@@ -38,12 +38,30 @@ if (!originalEntry.includes("import App from './App'"))
 write('src/main.tsx', [
   "import {createRoot} from 'react-dom/client';",
   "import App from './App';",
+  "import type {Document} from './model';",
   "import './admin.css';",
   "import './auth.css';",
   "import {I18nProvider} from './i18n';",
   "import {loadCatalog} from './datasets';",
-  "createRoot(document.getElementById('root')!).render(<I18nProvider><App/></I18nProvider>);",
-  "void loadCatalog().catch(()=>{});",
+  "async function startOffline() {",
+  "  let document:Document|undefined;",
+  "  try {",
+  "    const response=await fetch('/api/project/autosave?content=1',{cache:'no-store'});",
+  "    if(response.ok){",
+  "      const value:unknown=await response.json();",
+  "      if(value&&typeof value==='object'&&",
+  "        typeof (value as Document).name==='string'&&",
+  "        Array.isArray((value as Document).parts)&&",
+  "        (value as Document).settings)document=value as Document;",
+  "    }",
+  "  } catch {}",
+  "  createRoot(documentElement()).render(<I18nProvider>",
+  "    {document?<App initialDocument={document}/>:<App/>}",
+  "  </I18nProvider>);",
+  "  void loadCatalog().catch(()=>{});",
+  "}",
+  "function documentElement(){const element=document.getElementById('root');if(!element)throw Error('Serula root not found');return element;}",
+  "void startOffline();",
   ""
 ].join('\n'));
 
@@ -57,6 +75,12 @@ function replaceLabels(file, replacements) {
   for (const [oldText, newText] of replacements) text = text.split(oldText).join(newText);
   fs.writeFileSync(p, text, 'utf8');
 }
+// The online App defaults to recoveryReady=false until its default sample
+// finishes loading. PC boots its project directly from the local API instead,
+// so allow browser recovery and autosave to begin immediately.
+replaceLabels('src/App.tsx', [
+  ['const [recoveryReady,setRecoveryReady]=useState(false)', 'const [recoveryReady,setRecoveryReady]=useState(true)']
+]);
 replaceLabels('src/App.tsx', [
   ['Buluta kaydedildi', 'Bilgisayara kaydedildi'],
   ['Buluta kaydediliyor…', 'Bilgisayara kaydediliyor…'],
