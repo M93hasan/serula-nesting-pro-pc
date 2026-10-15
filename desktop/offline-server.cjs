@@ -65,14 +65,47 @@ function createOfflineServer({ assetsDir, dataDir }) {
   const token = crypto.randomBytes(32).toString('hex');
   const manifestPath = path.join(dataDir, 'manifest.json');
   const autosavePath = path.join(dataDir, 'autosave.json');
-  let manifest = { nextId: 1, items: [], autosave: null };
+  let manifest = { nextId: 1, items: [], autosave: null, localRevision: 0, acceptedRevision: 0 };
   if (fs.existsSync(manifestPath)) {
     const saved = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
     if (Number.isSafeInteger(saved.nextId) && Array.isArray(saved.items))
-      manifest = { nextId: saved.nextId, items: saved.items, autosave: saved.autosave || null };
+      manifest = { nextId: saved.nextId, items: saved.items, autosave: saved.autosave || null,
+        localRevision: Number.isSafeInteger(saved.localRevision) ? saved.localRevision : 0,
+        acceptedRevision: Number.isSafeInteger(saved.acceptedRevision) ? saved.acceptedRevision : 0 };
   }
   function saveManifest() { atomicWrite(manifestPath, JSON.stringify(manifest)); }
   function exportFile(id, ext) { return path.join(dataDir, 'exports', String(id) + ext); }
+  function markOfflineChange() { manifest.localRevision++; }
+  function hasPendingLocalChanges() { return manifest.localRevision > manifest.acceptedRevision; }
+  function acceptLocalChanges() { manifest.acceptedRevision = manifest.localRevision; saveManifest(); }
+  function importOnlineRecovery(value) {
+    if (typeof value !== 'string' || Buffer.byteLength(value, 'utf8') > MAX_BYTES) return false;
+    let doc;
+    try { doc = JSON.parse(value); } catch { return false; }
+    if (!doc || !Array.isArray(doc.parts) || typeof doc.name !== 'string') return false;
+    // Always keep a separate online recovery copy. Never discard prior offline
+    // autosaves, even if the user switches modes many times.
+    atomicWrite(path.join(dataDir, 'last-online-recovery.json'), value);
+    if (fs.existsSync(autosavePath)) {
+      const previous = fs.readFileSync(autosavePath, 'utf8');
+      if (previous === value) return true;
+      const backup = path.join(dataDir, 'backups',
+        'offline-' + new Date().toISOString().replace(/[:.]/g, '-') +
+        '-' + crypto.randomBytes(4).toString('hex') + '.json');
+      atomicWrite(backup, previous);
+    }
+    atomicWrite(autosavePath, value);
+    manifest.autosave = {
+      label: 'Serula Nesting En Temiz Hali',
+      projectName: doc.name.slice(0, 150),
+      byteSize: Buffer.byteLength(value, 'utf8'),
+      updatedAt: new Date().toISOString()
+    };
+    // Imported data is not an offline edit. A previous local revision must
+    // still be acknowledged by the user before a destructive mode transition.
+    saveManifest();
+    return true;
+  }
 
   const server = http.createServer(async (req, res) => {
     // Workers, SharedArrayBuffer and threaded WASM need cross-origin isolation.
@@ -108,6 +141,7 @@ function createOfflineServer({ assetsDir, dataDir }) {
           };
           manifest.items.unshift(item);
           manifest.nextId++;
+          markOfflineChange();
           const dropped = manifest.items.splice(MAX_EXPORTS);
           saveManifest();
           for (const old of dropped) for (const ext of ['.dxf', '.json']) {
@@ -121,6 +155,7 @@ function createOfflineServer({ assetsDir, dataDir }) {
             if (typeof body.projectJson !== 'string' || !body.projectJson)
               return fail(res, 400, 'Proje içeriği eksik.');
             atomicWrite(autosavePath, body.projectJson);
+            markOfflineChange();
             manifest.autosave = {
               label: 'Serula Nesting En Temiz Hali',
               projectName: String(body.projectName || '').slice(0, 150),
@@ -152,6 +187,7 @@ function createOfflineServer({ assetsDir, dataDir }) {
           }
           if (req.method === 'DELETE') {
             manifest.items = manifest.items.filter(x => x.id !== id);
+            markOfflineChange();
             saveManifest();
             for (const ext of ['.dxf', '.json']) {
               try { fs.unlinkSync(exportFile(id, ext)); } catch {}
@@ -196,6 +232,10 @@ function createOfflineServer({ assetsDir, dataDir }) {
 
   return {
     token,
+    importOnlineRecovery,
+    hasPendingLocalChanges,
+    acceptLocalChanges,
+    getLocalRevision() { return manifest.localRevision; },
     async listen() {
       await new Promise((resolve, reject) => {
         server.once('error', reject);
