@@ -6,6 +6,8 @@ on:
     branches: [main]
     paths:
       - "desktop/**"
+      - "scripts/**"
+      - "tests/**"
       - "package.json"
       - ".github/workflows/build-windows.yml"
       - ".github/workflows/pc-windows-release.yml"
@@ -13,6 +15,8 @@ on:
     branches: [main]
     paths:
       - "desktop/**"
+      - "scripts/**"
+      - "tests/**"
       - "package.json"
       - ".github/workflows/build-windows.yml"
 
@@ -22,19 +26,31 @@ permissions:
 jobs:
   build:
     runs-on: windows-latest
+    timeout-minutes: 45
     steps:
-      - name: Checkout
+      - name: Checkout PC shell
         uses: actions/checkout@v4
+
+      - name: Checkout web source for bundled offline build
+        uses: actions/checkout@v4
+        with:
+          repository: M93hasan/nesting
+          ref: main
+          path: web-source
+          persist-credentials: false
 
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
           node-version: 22
 
-      - name: Install dependencies
-        run: npm install
+      - name: Install PC dependencies
+        run: npm install --no-audit --no-fund
 
-      - name: Verify bundled bridge scripts (PowerShell 5.1)
+      - name: Install web dependencies
+        run: npm ci --prefix web-source/web --no-audit --no-fund
+
+      - name: Verify PowerShell bridge syntax
         shell: powershell
         run: |
           foreach ($file in @('desktop/bridge/SerulaTransferBridge.ps1', 'desktop/bridge/SetupBundledBridge.ps1')) {
@@ -43,13 +59,18 @@ jobs:
             [System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $file), [ref]$tokens, [ref]$parseErrors) | Out-Null
             if ($parseErrors.Count -gt 0) { throw "PowerShell syntax error in $file : $($parseErrors | Out-String)" }
           }
-          if (-not (Test-Path 'desktop/bridge/Serula-Kur.cmd')) { throw 'Bundled installer command missing' }
 
-      - name: Validate Electron main process
-        run: node --check desktop/main.cjs
+      - name: Validate desktop and test offline storage
+        run: |
+          node --check desktop/main.cjs
+          node --check desktop/offline-server.cjs
+          node --check scripts/prepare-offline.cjs
+          npm run offline:test
 
-      - name: Build Windows installer
+      - name: Build Windows offline installer
         run: npm run dist:win
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
       - name: Upload installer artifact
         uses: actions/upload-artifact@v4
@@ -57,6 +78,3 @@ jobs:
           name: serula-nesting-pro-pc-windows
           path: release/Serula-Nesting-Pro-PC-Setup.exe
           if-no-files-found: error
-
-      # Releases are published only by pc-windows-release.yml so an older
-      # installer cannot overwrite the current latest version.
