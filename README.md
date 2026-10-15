@@ -1,61 +1,59 @@
-# Serula Nesting Pro PC (Windows) — Çevrimdışı
+# Serula Nesting Pro PC — Hibrit çevrimiçi / çevrimdışı
 
-Bu depo **Serula Nesting Pro'nun bağımsız Windows sürümüdür**. PC sürümü artık serula.site adresini açan bir tarayıcı kabuğu değildir. React arayüzü, DXF işleme kodu ve önceden derlenmiş Rust/WebAssembly Sparrow yerleşim motoru kurulum paketinin içindedir.
+Windows için **Serula Nesting Pro PC v0.1.7**. Aynı kurulumda **canlı web sürümü** ve **yerel offline sürüm** bulunur. Ana web deposu [M93hasan/nesting](https://github.com/M93hasan/nesting) ve nesting algoritması değiştirilmemiştir.
 
-## PC v0.1.6
+## Otomatik çalışma
 
-- **İnternet gerektirmez:** Program açılışı, DXF / SVG / PLT içe aktarma, rulo/plaka nesting hesaplama ve DXF indirme aynı bilgisayarda yapılır.
-- **Hesap girişi gerekmez:** Çevrimdışı kullanım için sunucu oturumu, kredi veya çevrimiçi DXF onayı beklenmez.
-- **Projeler bilgisayara kaydedilir:** Son proje offline-data/autosave.json olarak; DXF geçmişi ve karşılık gelen proje JSON'ları yerel dosyalar olarak saklanır. Son **50** DXF çıktısı geçmişte tutulur.
-- **Yerleşim motoruna dokunulmaz:** Windows paketi M93hasan/nesting kaynağını derleme anında ayrı olarak alır; yalnızca PC'ye özel giriş ve çevrimdışı veri erişim katmanını hazırlar. Web deposunun kaynak dosyaları **değiştirilmez**.
-- **İnternetli web özellikleri çevrimdışı değildir:** Bulut senkronizasyonu, web hesabı, canlı destek, admin paneli ve sunucu bileti doğrulayan CorelDRAW/RDWorks aktarım köprüsü offline PC'de kullanılamaz. DXF'yi indirip CorelDRAW veya RDWorks içinde normal **İçe Aktar** yoluyla açabilirsiniz.
-- **Güncelleme şekli:** Çevrimdışı PC sürümünün güncellenmesi için yeni kurulum paketi gerekir. Web sitesinin sonraki değişiklikleri kurulu EXE'ye otomatik yansımaz.
+- Program açılırken doğrudan **https://serula.site** erişimini denetler. Site ulaşılabiliyorsa gerçek online sürümü açar: mevcut web hesabı, bulut geçmişi, canlı destek ve web yetkileri oradadır.
+- İnternet yoksa veya site erişilemiyorsa paket içindeki **React arayüzü + Rust/WASM yerleşim motoru** yerel Windows bağlantısında çalışır. DXF / SVG / PLT içe alma, rulo/plaka nesting hesaplama ve DXF dışa aktarma sunucuya bağlı değildir.
+- Açıkken bağlantıyı yaklaşık **12 saniyede bir** kontrol eder. İki ardışık başarısız testte çevrimdışı sürüme geçer; iki ardışık başarılı testte online dönüşü değerlendirir. Zayıf Wi-Fi'de gereksiz sürekli geçişi azaltır.
+- İnternet geri geldiğinde **çevrimdışı değişiklik yapılmadıysa** otomatik olarak online sürüme döner. **Yerel değişiklikler varsa**, sessizce online hesaba geçmek ya da buluttaki projeyi ezmek yerine kullanıcıya seçim sunar.
+- İki görünümün pencereleri birbirinden ayrıdır; görünmeyen online oturum kapatılmaz. Böylece geçici bağlantı kaybında çevrimiçi sayfanın RAM'deki durumunu silmekten kaçınılır. Yine de ağ kesintisi sırasında sunucu işlemleri başarısız olabilir; kritik projelerin ayrıca kopyası tutulmalıdır.
+- Üst menüde **Serula → Çevrimiçi aç / Çevrimdışı aç / Bağlantıyı kontrol et** bulunur. Kısayollar Ctrl+Shift+O ve Ctrl+Shift+L.
 
-## İndirme ve kullanım
+## Projelerin korunması ve eşitleme sınırları
 
-[**Windows kurulum dosyası — Releases**](https://github.com/M93hasan/serula-nesting-pro-pc/releases/latest)
+Online hesap ve offline bilgisayar kayıtları **ayrı saklanır**. Offline kayıtları, çevrimiçi hesaba **otomatik gönderilmez**. Bu yüzden çevrimdışı bir projeyi web hesabına taşımak için proje dosyasını dışa aktarıp online sürümde açarak kaydetmek gerekir. Kullanıcı onay vermedikçe çevrimdışı içerikle bulut projesinin üzerine yazılmaz.
 
-Yeni offline sürümün sürüm etiketi **pc-v0.1.6** olmalıdır. Önceki pc-v0.1.5 ve daha eski kurulumlar canlı serula.site sitesini açabilir; bunlar offline sürüm değildir.
+- Offline modundaki son proje diskte `offline-data/autosave.json` dosyasında, son 50 DXF çıktısı `offline-data/exports/` klasöründe tutulur. DXF geçmişindeki proje kopyaları da burada saklanır.
+- Online görünümdeki son proje Serula'nın tarayıcı kurtarma deposunda bulunuyorsa çevrimdışına geçerken kopyası yerel moda aktarılır. Çakışma varsa önceki offline projenin yedeği `offline-data/backups/` içine konur. Son online kurtarma ayrıca `offline-data/last-online-recovery.json` olarak saklanır.
+- Web arayüzü kendi kurtarma kaydını üretmemişse online projenin otomatik olarak offline moda taşınması garanti değildir. **İki modda aynı proje kendiliğinden senkronize olmuş sayılmaz.**
+- Offline kayıtlardan sonra bağlantı geri geldiğinde online geçiş onayı istenir; yerel dosyalar korunur. Web sürümünü yeniden açınca farklı bir projenin görünmesi mümkündür.
+- Yerel klasör, Windows'ta genellikle `%APPDATA%\serula-nesting-pro-pc\offline-data` altındadır. Kesin yol Electron userData dizinine bağlıdır. **Yardım → Yerel kayıt klasörü** seçeneği dosyaları açar.
 
-İnterneti kapatarak test: programı açın; bir DXF içe aktarın, nesting çalıştırın, DXF çıktısını kaydedin, programı kapatıp yeniden açın ve **Geçmiş** kaydını kontrol edin.
+## Online / offline özellikler
 
-## Verilerin saklandığı yer
+| Özellik | İnternet olduğunda | İnternet yokken |
+| --- | --- | --- |
+| DXF / SVG / PLT içe alma | Canlı web | Kurulum içindeki yerel motor |
+| Rulo ve plaka yerleştirme | Canlı web WASM | Paketlenmiş WASM |
+| DXF dışa aktarma | Web yetkisine bağlı | Yerel olarak serbest |
+| Proje / çıktı geçmişi | Web hesabı ve bulut | Windows yerel kayıt |
+| Kullanıcı girişi, admin ve canlı destek | Desteklenir | Kullanılamaz |
+| CorelDRAW / RDWorks aktarma köprüsü | Yetki ve çalışan Windows köprüsü gerekir | Sunucu bileti doğrulaması olmadığından otomatik aktarım kullanılamaz; DXF dosyasını elle içe alın |
 
-Windows'ta genel olarak:
+Offline motorunun sürümü kurulum paketiyle gelir; web sitesi güncellense bile kurulu offline motor yeni paket yüklenmeden güncellenmez.
 
-    %APPDATA%\serula-nesting-pro-pc\offline-data\
+## Windows kurulumu
 
-Kesin konum Electron app.getPath('userData')/offline-data değeridir; işletim sistemi ve geçmiş kurulum yapılandırmasına göre değişebilir. Burada manifest.json, autosave.json ve exports/ klasörü vardır. Bu klasörün yedeğini almak, yerel proje ve çıktı geçmişini korur. Bu dosyalar buluta otomatik yüklenmez.
+[**Serula Nesting Pro PC indirme sayfası**](https://github.com/M93hasan/serula-nesting-pro-pc/releases/latest)
 
-## Geliştirme ve kurulum paketi üretme
+**Hibrit sürüm etiketi: pc-v0.1.7.** pc-v0.1.6 sadece offline sürümdü; yeni sürüm kurulduğunda varsayılan olarak bağlantı durumuna göre seçim yapılır.
 
-Node.js 22 ve Windows için:
+Kurulumdan sonra üç test önerilir: (1) internet açıkken hesabınla canlı web'e gir; (2) bağlantıyı kes, otomatik offline geçişte DXF içe alıp nesting ve export yap; (3) internet geldiğinde offline değişikliklerin korunmasına dair seçimi kontrol et. Sonrasında programı yeniden açıp offline geçmişi incele.
 
-1. Bu PC deposunu indirin.
-2. Web kaynağını web-source/ altına M93hasan/nesting olarak yerleştirin (örn. git clone https://github.com/M93hasan/nesting.git web-source) veya SERULA_WEB_DIR ortam değişkeninde web klasörü yolunu tanımlayın.
-3. Bağımlılıkları kurun:
+## Geliştirme ve derleme
 
-       npm install
-       npm ci --prefix web-source/web
+Node.js 22 gereklidir. PC deposunu ve ana web kaynağını ayrı klasörlerde saklayın:
 
-4. Test ve derleme:
+    git clone https://github.com/M93hasan/serula-nesting-pro-pc.git
+    cd serula-nesting-pro-pc
+    git clone https://github.com/M93hasan/nesting.git web-source
+    npm install
+    npm ci --prefix web-source/web
+    npm run offline:test
+    npm run dist:win
 
-       npm run offline:test
-       npm run desktop:dev
-       npm run dist:win
+Derleme `release/Serula-Nesting-Pro-PC-Setup.exe` dosyasını üretir. GitHub Actions iki depoyu ayrı indirir, geçici web kaynağında sadece PC offline kabuğuna özgü başlangıç ve kurtarma değişikliklerini uygular, web deposunu değiştirmez. Paket yapımı internet gerektirebilir; kurulmuş PC programı offline çalışır.
 
-Kurulum dosyası release/Serula-Nesting-Pro-PC-Setup.exe altında oluşur. GitHub Actions, PC ve web kaynaklarını ayrı checkout adımlarıyla alır ve offline derlemeyi Windows üzerinde yapar.
-
-npm run offline:prepare, web kaynağının **geçici kopyası** üstüne çevrimdışı PC giriş dosyasını ve yerel kayıt etiketlerini uygular. Ardından tip kontrolü / mevcut dört WASM ikili dosyasının varlık kontrolü / Vite üretim derlemesi çalışır ve offline-web/ dosyalarını üretir. Web deposundaki prebuilt.sha256 parmak izi güncel kaynakla uyuşmadığı için PC derlemesi mevcut WASM ikili dosyalarını değiştirmeden kullanır; bu uyumsuzluk ayrıca giderilmelidir. Derleme için internet veya önceden indirilmiş bağımlılıklar gerekebilir; **kurulmuş program için gerekmez**.
-
-## Güvenlik ve mimari
-
-- Electron yalnızca 127.0.0.1 adresinde rastgele bağlantı noktasına bağlanan Node HTTP sunucusunu açar; siteye bağlanmaz ve dış ağ isteklerini engeller.
-- Yerel API, rastgele üretilmiş HttpOnly, SameSite=Strict oturum çerezi ile korunur. Windows dosyaları web içeriklerine doğrudan açılmaz.
-- Cross-Origin-Opener-Policy ve Cross-Origin-Embedder-Policy üstbilgileri, destekleyen bilgisayarlarda WASM worker/SharedArrayBuffer kullanımı için eklenmiştir.
-- Nesting geometri, dönüş, rulo/plaka, DXF varlık koruma ve hesaplama işleyişi web kaynağıyla aynıdır.
-- Lazer üretiminde dosyayı CorelDRAW veya RDWorks'e aldıktan sonra parça adedi, gerçek ölçüler ve kesim katmanlarını kontrol edin.
-
-**Web projesi:** https://github.com/M93hasan/nesting
-
-**Mevcut Windows köprüsü:** desktop/bridge/ altında muhafaza edilir; çevrimdışı modda otomatik kurulmaz, çünkü sunucu bileti doğrulaması internete bağlıdır.
+**Not:** Web projesindeki WASM parmak izi mevcut ikili paketlerle eşleşmiyorsa PC derlemesi kaynak motora müdahale etmeden dört önceden üretilmiş WASM paketini korur. Bu upstream eşleşme sorunu ayrı takip edilmelidir.
