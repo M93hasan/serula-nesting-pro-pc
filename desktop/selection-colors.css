@@ -1,0 +1,60 @@
+/*
+ * Serula PC — selected-control contrast (online and offline windows).
+ * Applied by Electron as user-origin CSS, so the compact blue button theme's
+ * late author-origin !important rules cannot wash out active choices.
+ * Appearance only: no event listeners, nesting geometry or layout changes.
+ */
+
+:root {
+  --serula-pc-choice-blue-top: #43bdff;
+  --serula-pc-choice-blue-bottom: #147fd4;
+  --serula-pc-choice-border: #075da7;
+  --serula-pc-choice-ring: rgba(49, 164, 255, .34);
+}
+
+/* Choice controls: inactive options remain neutral, selected is distinctly blue. */
+#root .rotation-choice .row-actions button[aria-pressed="false"]:not(:disabled),
+#root .mirror-control .row-actions button[aria-pressed="false"]:not(:disabled),
+#root .result-mode button[aria-pressed="false"]:not(:disabled) {
+  background: light-dark(#e7eef5, #2a3441) !important;
+  border: 1px solid light-dark(#aabfd1, #4d6275) !important;
+  color: light-dark(#284359, #d6e7f4) !important;
+  box-shadow: none !important;
+  text-shadow: none !important;
+}
+
+/* Selected state is visible even in the global all-blue button theme. */
+#root .rotation-choice .row-actions button[aria-pressed="true"],
+#root .mirror-control .row-actions button[aria-pressed="true"],
+#root .result-mode button[aria-pressed="true"],
+#root .canvas-tools button[aria-pressed="true"],
+#root .auth-tabs button.active,
+#root .admin-sidebar nav button.active,
+#root button[role="tab"][aria-selected="true"] {
+  background: linear-gradient(180deg,
+    var(--serula-pc-choice-blue-top),
+    var(--serula-pc-choice-blue-bottom)) !important;
+  color: #fff !important;
+  border: 2px solid var(--serula-pc-choice-border) !important;
+  box-shadow: 0 0 0 3px var(--serula-pc-choice-ring),
+    0 5px 15px rgba(9, 93, 174, .25) !important;
+  text-shadow: none !important;
+  font-weight: 750 !important;
+}
+
+/* Hover must retain the active selection, not revert to the default blue. */
+#root .rotation-choice .row-actions button[aria-pressed="true"]:hover:enabled,
+#root .mirror-control .row-actions button[aria-pressed="true"]:hover:enabled,
+#root .result-mode button[aria-pressed="true"]:hover:enabled,
+#root .canvas-tools button[aria-pressed="true"]:hover:enabled,
+#root .auth-tabs button.active:hover:enabled,
+#root .admin-sidebar nav button.active:hover:enabled,
+#root button[role="tab"][aria-selected="true"]:hover:enabled {
+  background: linear-gradient(180deg, #5dc9ff, #168fe3) !important;
+  border-color: #075da7 !important;
+  color: #fff !important;
+  box-shadow: 0 0 0 3px var(--serula-pc-choice-ring),
+    0 5px 15px rgba(9, 93, 174, .25) !important;
+}
+
+/* No padding, width, min-height, grid, flex, font-size or button geometry is changed. */
