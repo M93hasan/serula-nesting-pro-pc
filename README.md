@@ -1,6 +1,6 @@
 # Serula Nesting Pro PC — Hibrit çevrimiçi / çevrimdışı
 
-Windows için **Serula Nesting Pro PC v0.1.7**. Aynı kurulumda **canlı web sürümü** ve **yerel offline sürüm** bulunur. Ana web deposu [M93hasan/nesting](https://github.com/M93hasan/nesting) ve nesting algoritması değiştirilmemiştir.
+Windows için **Serula Nesting Pro PC v0.1.8**. Aynı kurulumda **canlı web sürümü** ve **yerel offline sürüm** bulunur. Ana web deposu [M93hasan/nesting](https://github.com/M93hasan/nesting) ve nesting algoritması değiştirilmemiştir.
 
 ## Otomatik çalışma
 
@@ -21,6 +21,12 @@ Online hesap ve offline bilgisayar kayıtları **ayrı saklanır**. Offline kay�
 - Offline kayıtlardan sonra bağlantı geri geldiğinde online geçiş onayı istenir; yerel dosyalar korunur. Web sürümünü yeniden açınca farklı bir projenin görünmesi mümkündür.
 - Yerel klasör, Windows'ta genellikle `%APPDATA%\serula-nesting-pro-pc\offline-data` altındadır. Kesin yol Electron userData dizinine bağlıdır. **Yardım → Yerel kayıt klasörü** seçeneği dosyaları açar.
 
+## Seçili butonların rengi (v0.1.8)
+
+0°, 0°/180° ve Her yöne izinli dönüş seçeneklerinde ve diğer seçilebilir düğmelerde **aktif seçim açık mavi/derin mavi gradyan, beyaz yazı ve belirgin kenarlıkla** gösterilir. Aktif olmayan seçimler nötr bırakılır; buton ebatları, yerleşim ve click işlevleri değiştirilmez.
+
+Bu görsel değişiklik **yalnızca Windows PC uygulamasının online ve offline pencerelerinde** Electron stil katmanı üzerinden uygulanır. Web deposuna veya tarayıcıda açılan serula.site sitesinin dosyalarına müdahale edilmemiştir.
+
 ## Online / offline özellikler
 
 | Özellik | İnternet olduğunda | İnternet yokken |
@@ -38,7 +44,7 @@ Offline motorunun sürümü kurulum paketiyle gelir; web sitesi güncellense bil
 
 [**Serula Nesting Pro PC indirme sayfası**](https://github.com/M93hasan/serula-nesting-pro-pc/releases/latest)
 
-**Hibrit sürüm etiketi: pc-v0.1.7.** pc-v0.1.6 sadece offline sürümdü; yeni sürüm kurulduğunda varsayılan olarak bağlantı durumuna göre seçim yapılır.
+**Hibrit sürüm etiketi: pc-v0.1.8.** pc-v0.1.6 sadece offline sürümdü; yeni sürüm kurulduğunda varsayılan olarak bağlantı durumuna göre seçim yapılır.
 
 Kurulumdan sonra üç test önerilir: (1) internet açıkken hesabınla canlı web'e gir; (2) bağlantıyı kes, otomatik offline geçişte DXF içe alıp nesting ve export yap; (3) internet geldiğinde offline değişikliklerin korunmasına dair seçimi kontrol et. Sonrasında programı yeniden açıp offline geçmişi incele.
 
