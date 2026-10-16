@@ -8,6 +8,7 @@ on:
       - "scripts/**"
       - "tests/**"
       - "package.json"
+      - "README.md"
       - ".github/workflows/pc-windows-release.yml"
   workflow_dispatch:
   schedule:
