@@ -82,3 +82,7 @@ Derleme `release/Serula-Nesting-Pro-PC-Setup.exe` dosyasını üretir. GitHub Ac
 Yeni kullanıcılar ilk girişte makine kafa sayısı (tek / çift), malzeme türü (rulo / plaka), gerçek kesim eni ve plaka kesim boyunu seçer. Hesaplarına kaydolan ayarlar **Ayarlarım** bölümünden düzenlenebilir. Çift kafalı modda nesting fiziksel genişliğin yarısı kullanılarak hesaplanır (örn. **1400 mm → 700 mm**). İkinci kafa bölgesi görsel referanstır, DXF'ye iki kez kesim yaptıracak kopya eklenmez. Gerçek ikinci kafa X ofseti lazer makinesinde ayrıca kontrol edilmeli ve ilk üretim öncesi boş kesim testi yapılmalıdır.
 
 Windows PC uygulamasında internet varken çevrimiçi kullanıcı profili açılır; internet yokken çevrimdışı proje ve makinaya ait proje ayarları yerel kalır. 0.1.15 PC paketi yeni web/WASM kodlarını içerir. **CorelDRAW Bridge 1.6** sürümü sadece `corel` hedefini kabul eder.
+
+## Malzeme ve Yerleşim paneli (0.1.15 görünüm güncellemesi)
+
+Web arayüzünde **Makine ve malzeme**, **Yerleşim kuralları**, **Parça dönüşü** ve **Optimizasyon** alanları daha okunabilir dört bölümde toplanmıştır. Kontrol değerleri ve mevcut nesting kuralları değiştirilmemiştir. Çevrimdışı Windows kurulumundaki React ekranı da her PC sürümü derlemesinde güncel web ana dalından paketlenir; yalnızca online siteyi açmak, geçmişte kurulmuş çevrimdışı bileşeni güncellemez.
