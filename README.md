@@ -1,6 +1,6 @@
 # Serula Nesting Pro PC — Hibrit çevrimiçi / çevrimdışı
 
-Windows için **Serula Nesting Pro PC v0.1.14**. Aynı kurulumda **canlı web sürümü** ve **yerel offline sürüm** bulunur. Ana web deposu [M93hasan/nesting](https://github.com/M93hasan/nesting) ve nesting algoritması değiştirilmemiştir.
+Windows için **Serula Nesting Pro PC v0.1.15**. Aynı kurulumda **canlı web sürümü** ve **yerel offline sürüm** bulunur. Ana web deposu [M93hasan/nesting](https://github.com/M93hasan/nesting) ve nesting algoritması değiştirilmemiştir.
 
 ## Otomatik çalışma
 
@@ -36,11 +36,11 @@ Bu görsel değişiklik **yalnızca Windows PC uygulamasının online ve offline
 | DXF dışa aktarma | Web yetkisine bağlı | Yerel olarak serbest |
 | Proje / çıktı geçmişi | Web hesabı ve bulut | Windows yerel kayıt |
 | Kullanıcı girişi, admin ve canlı destek | Desteklenir | Kullanılamaz |
-| CorelDRAW / RDWorks aktarma köprüsü | Yetki ve çalışan Windows köprüsü gerekir | Sunucu bileti doğrulaması olmadığından otomatik aktarım kullanılamaz; DXF dosyasını elle içe alın |
+| CorelDRAW aktarma köprüsü | Yetki ve çalışan Windows köprüsü gerekir | Sunucu bileti doğrulaması olmadığından otomatik aktarım kullanılamaz; DXF dosyasını elle içe alın |
 
 Offline motorunun sürümü kurulum paketiyle gelir; web sitesi güncellense bile kurulu offline motor yeni paket yüklenmeden güncellenmez.
 
-## Web–PC sürüm eşitlemesi (0.1.14)
+## Web–PC sürüm eşitlemesi (0.1.15)
 
 - PC paketi yalnızca **web ve PC sürümü eşleşiyorsa** hazırlanır; aksi halde derleme durur.
 - Çevrimdışı motorun kaynak GitHub commit'i, paketteki `serula-build.json` dosyasına yazılır.
@@ -48,13 +48,13 @@ Offline motorunun sürümü kurulum paketiyle gelir; web sitesi güncellense bil
 - Windows yayın hattı, her gece web reposunun güncel durumunu kontrol eder; son yayımlanan paketten farklıysa yeniden derler.
 - Online sürüm canlı siteyi açar; offline sürüm ancak yeni EXE kurulduğunda güncellenir. Çevrimdışı projeler otomatik olarak buluta taşınmaz.
 
-**RDWorks entegrasyonuna bu güncellemede dokunulmamıştır.**
+**RDWorks otomatik aktarımı bu sürümde kaldırılmıştır.**
 
 ## Windows kurulumu
 
 [**Serula Nesting Pro PC indirme sayfası**](https://github.com/M93hasan/serula-nesting-pro-pc/releases/latest)
 
-**Hibrit sürüm etiketi: pc-v0.1.14.** pc-v0.1.6 sadece offline sürümdü; yeni sürüm kurulduğunda varsayılan olarak bağlantı durumuna göre seçim yapılır.
+**Hibrit sürüm etiketi: pc-v0.1.15.** pc-v0.1.6 sadece offline sürümdü; yeni sürüm kurulduğunda varsayılan olarak bağlantı durumuna göre seçim yapılır.
 
 Kurulumdan sonra üç test önerilir: (1) internet açıkken hesabınla canlı web'e gir; (2) bağlantıyı kes, otomatik offline geçişte DXF içe alıp nesting ve export yap; (3) internet geldiğinde offline değişikliklerin korunmasına dair seçimi kontrol et. Sonrasında programı yeniden açıp offline geçmişi incele.
 
@@ -75,4 +75,10 @@ Derleme `release/Serula-Nesting-Pro-PC-Setup.exe` dosyasını üretir. GitHub Ac
 **Not:** Web projesindeki WASM parmak izi mevcut ikili paketlerle eşleşmiyorsa PC derlemesi kaynak motora müdahale etmeden dört önceden üretilmiş WASM paketini korur. Bu upstream eşleşme sorunu ayrı takip edilmelidir.
 
 
-**RDWorks aktarımı:** CorelDRAW gibi güvenilir, manuel işlem gerektirmeyen tek tık yükleme doğrulanamadığı için 0.1.13 kullanıcı ve admin arayüzlerinde RDWorks aktarımı kapalıdır. CorelDRAW aktarımı korunmuştur.
+**Doğrudan aktarım:** Yalnızca CorelDRAW desteklenir; RDWorks aktarımı sistemden kaldırılmıştır.
+
+## Makine profili ve çift kafa (0.1.15)
+
+Yeni kullanıcılar ilk girişte makine kafa sayısı (tek / çift), malzeme türü (rulo / plaka), gerçek kesim eni ve plaka kesim boyunu seçer. Hesaplarına kaydolan ayarlar **Ayarlarım** bölümünden düzenlenebilir. Çift kafalı modda nesting fiziksel genişliğin yarısı kullanılarak hesaplanır (örn. **1400 mm → 700 mm**). İkinci kafa bölgesi görsel referanstır, DXF'ye iki kez kesim yaptıracak kopya eklenmez. Gerçek ikinci kafa X ofseti lazer makinesinde ayrıca kontrol edilmeli ve ilk üretim öncesi boş kesim testi yapılmalıdır.
+
+Windows PC uygulamasında internet varken çevrimiçi kullanıcı profili açılır; internet yokken çevrimdışı proje ve makinaya ait proje ayarları yerel kalır. 0.1.15 PC paketi yeni web/WASM kodlarını içerir. **CorelDRAW Bridge 1.6** sürümü sadece `corel` hedefini kabul eder.
