@@ -9,6 +9,7 @@ const choiceCss = fs.readFileSync(path.join(__dirname, 'selection-colors.css'), 
 let localServer, localOrigin, active = null, onlineWin, localWin;
 let switching = false, polling = false, quitting = false;
 let failures = 0, successes = 0, prompted = false, timer;
+let offlineBuildInfo = null;
 
 function onlineURL(raw) {
   try {
@@ -193,7 +194,21 @@ function rebuildMenu() {
     { label: 'Yardım', submenu: [
       { label: 'Serula sitesi', click: () => openExternal(ONLINE_URL) },
       { label: 'Yerel kayıt klasörü', click: () =>
-        void shell.openPath(path.join(app.getPath('userData'), 'offline-data')) }
+        void shell.openPath(path.join(app.getPath('userData'), 'offline-data')) },
+      { label: 'PC / Web sürüm bilgisi', click: () => {
+        const meta=offlineBuildInfo;
+        void dialog.showMessageBox(windowFor(active),{
+          type:'info', title:'Serula PC ve Web sürümleri',
+          message:meta
+            ? 'PC '+meta.pcVersion+' · Paketlenmiş web '+meta.webVersion
+            : 'PC '+app.getVersion()+' · Paket bilgisi okunamadı',
+          detail:meta
+            ? 'Çevrimdışı web commit: '+meta.webCommit+'\nPaket tarihi: '+meta.packagedAt+
+              '\nÇevrimiçi mod her zaman serula.site üzerindeki canlı sürümü açar.'
+            : 'Kurulum paketini yeniden indirerek güncelleyin.',
+          buttons:['Tamam']
+        });
+      } }
     ] }
   ]));
 }
@@ -201,6 +216,8 @@ app.whenReady().then(async () => {
   const assetsDir = app.isPackaged
     ? path.join(process.resourcesPath, 'serula-offline-web')
     : path.join(__dirname, '..', 'offline-web');
+  try { offlineBuildInfo=JSON.parse(fs.readFileSync(path.join(assetsDir,'serula-build.json'),'utf8')); }
+  catch { offlineBuildInfo=null; }
   localServer = createOfflineServer({ assetsDir, dataDir: path.join(app.getPath('userData'), 'offline-data') });
   localOrigin = await localServer.listen();
   const localSession = session.fromPartition('persist:serula-pc-local');
