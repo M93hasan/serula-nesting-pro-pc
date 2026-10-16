@@ -2,6 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { spawnSync } = require('node:child_process');
+const { resolveBuildMetadata } = require('./version-sync.cjs');
 
 const root = path.resolve(__dirname, '..');
 const sources = [
@@ -13,6 +14,12 @@ const source = sources.map(p => path.resolve(p)).find(p => fs.existsSync(path.jo
 if (!source) {
   throw Error('Serula web kaynağı bulunamadı. nesting deposunu web-source/ konumuna alın veya SERULA_WEB_DIR tanımlayın.');
 }
+const meta = resolveBuildMetadata({
+  pcVersion: JSON.parse(fs.readFileSync(path.join(root,'package.json'),'utf8')).version,
+  webVersion: JSON.parse(fs.readFileSync(path.join(source,'package.json'),'utf8')).version,
+  webCommit: process.env.SERULA_WEB_SHA,
+  sourceDir: source
+});
 if (!fs.existsSync(path.join(source, 'node_modules', '.bin')))
   throw Error('Web bağımlılıkları kurulu değil: npm ci --prefix "' + source + '"');
 const staging = path.join(root, '.offline-build', 'web');
@@ -119,4 +126,6 @@ for (const required of ['index.html', 'assets']) {
 }
 fs.rmSync(output, { recursive: true, force: true });
 fs.cpSync(dist, output, { recursive: true });
-console.log('Çevrimdışı web/WASM paketi hazır:', output);
+fs.writeFileSync(path.join(output,'serula-build.json'),JSON.stringify(meta,null,2)+'\n','utf8');
+console.log('Çevrimdışı web/WASM paketi hazır:', output,
+  'PC/Web '+meta.pcVersion+'/'+meta.webVersion,'web commit '+meta.webCommit);
