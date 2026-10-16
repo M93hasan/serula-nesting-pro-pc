@@ -9,7 +9,7 @@ $dst=Join-Path $root 'SerulaTransferBridge.ps1'
 $startup=Join-Path ([Environment]::GetFolderPath('Startup')) 'Serula Bridge.lnk'
 $endpoint='http://127.0.0.1:43842/health'
 $prefix='http://127.0.0.1:43842/'
-$version='1.5'
+$version='1.6'
 [IO.Directory]::CreateDirectory($root)|Out-Null
 function Log([string]$message) {
   $line='['+(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')+'] '+$message
@@ -86,7 +86,7 @@ try{
   $sc.Arguments='-NoProfile -STA -ExecutionPolicy Bypass -WindowStyle Hidden -File "'+$dst+'"'
   $sc.WorkingDirectory=$root
   $sc.WindowStyle=7
-  $sc.Description='Serula CorelDRAW / RDWorks local transfer'
+  $sc.Description='Serula CorelDRAW local transfer'
   $sc.Save()
   Log "Serula Bridge $version is ready. Starts with Windows."
 }catch{
