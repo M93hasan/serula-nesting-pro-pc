@@ -1,6 +1,6 @@
 # Serula Nesting Pro PC — Hibrit çevrimiçi / çevrimdışı
 
-Windows için **Serula Nesting Pro PC v0.1.15**. Aynı kurulumda **canlı web sürümü** ve **yerel offline sürüm** bulunur. Ana web deposu [M93hasan/nesting](https://github.com/M93hasan/nesting) ve nesting algoritması değiştirilmemiştir.
+Windows için **Serula Nesting Pro PC v0.1.16**. Aynı kurulumda **canlı web sürümü** ve **yerel offline sürüm** bulunur. Ana web deposu [M93hasan/nesting](https://github.com/M93hasan/nesting) ve nesting algoritması değiştirilmemiştir.
 
 ## Otomatik çalışma
 
@@ -40,7 +40,7 @@ Bu görsel değişiklik **yalnızca Windows PC uygulamasının online ve offline
 
 Offline motorunun sürümü kurulum paketiyle gelir; web sitesi güncellense bile kurulu offline motor yeni paket yüklenmeden güncellenmez.
 
-## Web–PC sürüm eşitlemesi (0.1.15)
+## Web–PC sürüm eşitlemesi (0.1.16)
 
 - PC paketi yalnızca **web ve PC sürümü eşleşiyorsa** hazırlanır; aksi halde derleme durur.
 - Çevrimdışı motorun kaynak GitHub commit'i, paketteki `serula-build.json` dosyasına yazılır.
@@ -54,7 +54,7 @@ Offline motorunun sürümü kurulum paketiyle gelir; web sitesi güncellense bil
 
 [**Serula Nesting Pro PC indirme sayfası**](https://github.com/M93hasan/serula-nesting-pro-pc/releases/latest)
 
-**Hibrit sürüm etiketi: pc-v0.1.15.** pc-v0.1.6 sadece offline sürümdü; yeni sürüm kurulduğunda varsayılan olarak bağlantı durumuna göre seçim yapılır.
+**Hibrit sürüm etiketi: pc-v0.1.16.** pc-v0.1.6 sadece offline sürümdü; yeni sürüm kurulduğunda varsayılan olarak bağlantı durumuna göre seçim yapılır.
 
 Kurulumdan sonra üç test önerilir: (1) internet açıkken hesabınla canlı web'e gir; (2) bağlantıyı kes, otomatik offline geçişte DXF içe alıp nesting ve export yap; (3) internet geldiğinde offline değişikliklerin korunmasına dair seçimi kontrol et. Sonrasında programı yeniden açıp offline geçmişi incele.
 
@@ -77,12 +77,16 @@ Derleme `release/Serula-Nesting-Pro-PC-Setup.exe` dosyasını üretir. GitHub Ac
 
 **Doğrudan aktarım:** Yalnızca CorelDRAW desteklenir; RDWorks aktarımı sistemden kaldırılmıştır.
 
-## Makine profili ve çift kafa (0.1.15)
+## Makine profili ve çift kafa (0.1.16)
 
-Yeni kullanıcılar ilk girişte makine kafa sayısı (tek / çift), malzeme türü (rulo / plaka), gerçek kesim eni ve plaka kesim boyunu seçer. Hesaplarına kaydolan ayarlar **Ayarlarım** bölümünden düzenlenebilir. Çift kafalı modda nesting fiziksel genişliğin yarısı kullanılarak hesaplanır (örn. **1400 mm → 700 mm**). İkinci kafa bölgesi görsel referanstır, DXF'ye iki kez kesim yaptıracak kopya eklenmez. Gerçek ikinci kafa X ofseti lazer makinesinde ayrıca kontrol edilmeli ve ilk üretim öncesi boş kesim testi yapılmalıdır.
+Yeni kullanıcılar ilk girişte makine kafa sayısı (tek / çift), malzeme türü (rulo / plaka), gerçek kesim eni ve plaka kesim boyunu seçer. Hesaplarına kaydolan ayarlar **Ayarlarım** bölümünden düzenlenebilir. Tek ve çift kafada nesting **girilen gerçek malzeme genişliğinin tamamını** kullanır (örn. **1400 mm → 1400 mm**). Otomatik /2 hesabı ve ikinci kafa önizlemesi iptal edilmiştir. Makineye ait ikinci kafa X ofseti üretici ayarlarıyla ayrıca doğrulanmalıdır. Eski 0.1.15 sürümünde yarım kaydedilen çift kafa proje genişlikleri tek seferlik uyumluluk dönüşümüyle gerçek genişliğe çevrilir; kesim konturları ve parça yerleşim koordinatları korunur.
 
-Windows PC uygulamasında internet varken çevrimiçi kullanıcı profili açılır; internet yokken çevrimdışı proje ve makinaya ait proje ayarları yerel kalır. 0.1.15 PC paketi yeni web/WASM kodlarını içerir. **CorelDRAW Bridge 1.6** sürümü sadece `corel` hedefini kabul eder.
+Windows PC uygulamasında internet varken çevrimiçi kullanıcı profili açılır; internet yokken çevrimdışı proje ve makinaya ait proje ayarları yerel kalır. 0.1.16 PC paketi yeni web/WASM kodlarını içerir. **CorelDRAW Bridge 1.6** sürümü sadece `corel` hedefini kabul eder.
 
-## Malzeme ve Yerleşim paneli (0.1.15 görünüm güncellemesi)
+## Malzeme ve Yerleşim paneli (0.1.16 görünüm güncellemesi)
 
 Web arayüzünde **Makine ve malzeme**, **Yerleşim kuralları**, **Parça dönüşü** ve **Optimizasyon** alanları daha okunabilir dört bölümde toplanmıştır. Kontrol değerleri ve mevcut nesting kuralları değiştirilmemiştir. Çevrimdışı Windows kurulumundaki React ekranı da her PC sürümü derlemesinde güncel web ana dalından paketlenir; yalnızca online siteyi açmak, geçmişte kurulmuş çevrimdışı bileşeni güncellemez.
+
+## Otomatik /2 iptali (0.1.16)
+
+Makine sayısı tek/çift olarak seçilebilir; bu bilgi sadece makine profili olarak saklanır. Girilen fiziksel malzeme enine matematiksel bölme yapılmaz; web ve Windows çevrimdışı sürümü bu tek kuralı kullanır. DXF kopyalama ya da ikinci kafa otomasyonu eklenmemiştir.
