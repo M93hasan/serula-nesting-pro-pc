@@ -85,8 +85,10 @@ jobs:
             }
           }
           $scriptText = Get-Content "desktop/bridge/SerulaTransferBridge.ps1" -Raw
-          if ($scriptText -notmatch "version='1.5'" -or $scriptText -notmatch "Open-RDWorksImportPicker" -or $scriptText -notmatch "Try-RDWorksClassicPicker") {
-            throw "Bridge version or RDWorks fallback missing."
+          if ($scriptText -notmatch "version='1.6'" -or
+              $scriptText -notmatch "supportedTargets=@\('corel'\)" -or
+              $scriptText -notmatch '\$target -ne ''corel''') {
+            throw "Corel-only bridge 1.6 safety restriction missing."
           }
       - name: Install PC dependencies
         if: steps.source.outputs.build == 'true'
@@ -136,7 +138,7 @@ jobs:
             pending local edits; otherwise asks before switching to prevent losing work.
             Offline saves and online cloud history remain separate and are never silently merged.
             Selected rotation options retain clear blue active states in both modes.
-            RDWorks direct transfer is hidden because reliable one-click import is unavailable; CorelDRAW remains available.
+            Only CorelDRAW direct transfer is supported; the retired laser-editor bridge workflow is removed.
             PC/Web version: ${{ steps.source.outputs.version }}.
             Web source commit: ${{ steps.source.outputs.web_sha }}
             PC source commit: ${{ steps.source.outputs.pc_sha }}
