@@ -26,9 +26,9 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Checkout PC shell
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       - name: Checkout live web source for offline packaging
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
         with:
           repository: M93hasan/nesting
           ref: main
