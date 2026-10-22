@@ -27,14 +27,14 @@ jobs:
     steps:
       - name: Checkout PC shell
         uses: actions/checkout@v5
-      - name: Checkout live web source for offline packaging
+      - name: Checkout web source for bundled offline build
         uses: actions/checkout@v5
         with:
           repository: M93hasan/nesting
           ref: main
           path: web-source
           persist-credentials: false
-      - name: Check web-PC version and published package provenance
+      - name: Verify matching versions and source provenance
         id: source
         shell: pwsh
         env:
@@ -42,7 +42,9 @@ jobs:
         run: |
           $pcVersion = (Get-Content package.json -Raw | ConvertFrom-Json).version
           $webVersion = (Get-Content web-source/web/package.json -Raw | ConvertFrom-Json).version
-          if ($pcVersion -notmatch '^\d+\.\d+\.\d+
+          if ($pcVersion -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid PC version: $pcVersion" }
+          if ($webVersion -notmatch '^\d+\.\d+\.\d+$') { throw "Invalid web version: $webVersion" }
+          if ($pcVersion -ne $webVersion) { throw "PC version $pcVersion differs from web version $webVersion. Align versions before releasing." }
           $webSha = (git -C web-source rev-parse HEAD).Trim()
           $pcSha = (git rev-parse HEAD).Trim()
           "version=$pcVersion" >> $env:GITHUB_OUTPUT
@@ -56,8 +58,7 @@ jobs:
               $headers = @{ Authorization="Bearer $env:GH_TOKEN"; Accept="application/vnd.github+json" }
               $release = Invoke-RestMethod -Uri $url -Headers $headers
               $installer = @($release.assets | Where-Object { $_.name -eq 'Serula-Nesting-Pro-PC-Setup.exe' }).Count -gt 0
-              if ($installer -and $release.body.Contains("Web source commit: $webSha") -and
-                  $release.body.Contains("PC source commit: $pcSha")) {
+              if ($installer -and $release.body.Contains("Web source commit: $webSha") -and $release.body.Contains("PC source commit: $pcSha")) {
                 $build = "false"
                 Write-Host "Already published this exact web/PC source pair."
               }
@@ -66,8 +67,9 @@ jobs:
             }
           }
           "build=$build" >> $env:GITHUB_OUTPUT
-      - uses: actions/setup-node@v4
+      - name: Set up Node.js
         if: steps.source.outputs.build == 'true'
+        uses: actions/setup-node@v4
         with:
           node-version: "22"
       - name: Validate Windows bridge PowerShell syntax
@@ -104,7 +106,7 @@ jobs:
           node --check desktop/offline-server.cjs
           node --check scripts/prepare-offline.cjs
           npm run offline:test
-      - name: Package Windows installer with local UI and WASM engine
+      - name: Build Windows installer
         if: steps.source.outputs.build == 'true'
         run: npm run dist:win
         env:
@@ -117,244 +119,21 @@ jobs:
           name: serula-nesting-pro-pc-setup
           path: release/Serula-Nesting-Pro-PC-Setup.exe
           if-no-files-found: error
-      - name: Resolve PC version
-        if: steps.source.outputs.build == 'true'
-        id: meta
-        shell: pwsh
-        run: |
-          $v = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          "version=$v" >> $env:GITHUB_OUTPUT
       - name: Publish versioned PC release
         if: steps.source.outputs.build == 'true'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: pc-v${{ steps.meta.outputs.version }}
-          name: Serula Nesting Pro PC v${{ steps.meta.outputs.version }}
+          tag_name: pc-v${{ steps.source.outputs.version }}
+          name: Serula Nesting Pro PC v${{ steps.source.outputs.version }}
           body: |
-            Hybrid Windows version: opens live serula.site when reachable and automatically
-            falls back to the bundled local React/Rust-WASM editor without internet.
-            Local DXF import, nesting and export use the bundled local editor; the history view supports clearing all exports.
-            After connectivity returns, automatically switches online when there are no
-            pending local edits; otherwise asks before switching to prevent losing work.
+            Hybrid Windows version: opens live serula.site when reachable and automatically falls back to the bundled local React/Rust-WASM editor without internet.
+            Local DXF import, nesting and export use the bundled local editor.
             Offline saves and online cloud history remain separate and are never silently merged.
-            Selected rotation options retain clear blue active states in both modes.
-            Only CorelDRAW direct transfer is supported; the retired laser-editor bridge workflow is removed.
-            PC version: ${{ steps.source.outputs.version }}.
-            Bundled offline web version: ${{ steps.source.outputs.web_version }}.
-            Web source commit: ${{ steps.source.outputs.web_sha }}
-            PC source commit: ${{ steps.source.outputs.pc_sha }}
-            Offline engine and UI were built together from this exact web commit.
-            The online view always runs the live website. Existing offline installations
-            require installing this updated setup to receive the new offline nesting changes.
-          files: release/Serula-Nesting-Pro-PC-Setup.exe
-          fail_on_unmatched_files: true
-) { throw "Invalid PC version: $pcVersion" }
-          if ($webVersion -notmatch '^\d+\.\d+\.\d+
-          $webSha = (git -C web-source rev-parse HEAD).Trim()
-          $pcSha = (git rev-parse HEAD).Trim()
-          "version=$pcVersion" >> $env:GITHUB_OUTPUT
-          "web_sha=$webSha" >> $env:GITHUB_OUTPUT
-          "pc_sha=$pcSha" >> $env:GITHUB_OUTPUT
-          $build = "true"
-          if ("${{ github.event_name }}" -eq "schedule") {
-            try {
-              $url = "https://api.github.com/repos/M93hasan/serula-nesting-pro-pc/releases/tags/pc-v$pcVersion"
-              $headers = @{ Authorization="Bearer $env:GH_TOKEN"; Accept="application/vnd.github+json" }
-              $release = Invoke-RestMethod -Uri $url -Headers $headers
-              $installer = @($release.assets | Where-Object { $_.name -eq 'Serula-Nesting-Pro-PC-Setup.exe' }).Count -gt 0
-              if ($installer -and $release.body.Contains("Web source commit: $webSha") -and
-                  $release.body.Contains("PC source commit: $pcSha")) {
-                $build = "false"
-                Write-Host "Already published this exact web/PC source pair."
-              }
-            } catch {
-              Write-Host "Exact release provenance unavailable; build will proceed."
-            }
-          }
-          "build=$build" >> $env:GITHUB_OUTPUT
-      - uses: actions/setup-node@v4
-        if: steps.source.outputs.build == 'true'
-        with:
-          node-version: "22"
-      - name: Validate Windows bridge PowerShell syntax
-        if: steps.source.outputs.build == 'true'
-        shell: powershell
-        run: |
-          $targets = @("desktop/bridge/SerulaTransferBridge.ps1", "desktop/bridge/SetupBundledBridge.ps1")
-          foreach ($path in $targets) {
-            $tokens = $null
-            $errors = $null
-            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path), [ref]$tokens, [ref]$errors)
-            if ($errors.Count -gt 0) {
-              $errors | ForEach-Object { Write-Error "$path : $_" }
-              exit 1
-            }
-          }
-          $scriptText = Get-Content "desktop/bridge/SerulaTransferBridge.ps1" -Raw
-          if ($scriptText -notmatch "version='1.6'" -or
-              $scriptText -notmatch "supportedTargets=@\('corel'\)" -or
-              $scriptText -notmatch '\$target -ne ''corel''') {
-            throw "Corel-only bridge 1.6 safety restriction missing."
-          }
-      - name: Install PC dependencies
-        if: steps.source.outputs.build == 'true'
-        run: npm install --no-audit --no-fund
-      - name: Install web dependencies
-        if: steps.source.outputs.build == 'true'
-        run: npm ci --prefix web-source/web --no-audit --no-fund
-      - name: Validate offline desktop code and storage
-        if: steps.source.outputs.build == 'true'
-        run: |
-          node --check desktop/main.cjs
-          node --check desktop/hybrid-mode.cjs
-          node --check desktop/offline-server.cjs
-          node --check scripts/prepare-offline.cjs
-          npm run offline:test
-      - name: Package Windows installer with local UI and WASM engine
-        if: steps.source.outputs.build == 'true'
-        run: npm run dist:win
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
-          SERULA_WEB_SHA: ${{ steps.source.outputs.web_sha }}
-      - name: Upload Windows installer artifact
-        if: steps.source.outputs.build == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: serula-nesting-pro-pc-setup
-          path: release/Serula-Nesting-Pro-PC-Setup.exe
-          if-no-files-found: error
-      - name: Resolve PC version
-        if: steps.source.outputs.build == 'true'
-        id: meta
-        shell: pwsh
-        run: |
-          $v = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          "version=$v" >> $env:GITHUB_OUTPUT
-      - name: Publish versioned PC release
-        if: steps.source.outputs.build == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: pc-v${{ steps.meta.outputs.version }}
-          name: Serula Nesting Pro PC v${{ steps.meta.outputs.version }}
-          body: |
-            Hybrid Windows version: opens live serula.site when reachable and automatically
-            falls back to the bundled local React/Rust-WASM editor without internet.
-            Local DXF import, nesting and export use the bundled local editor; the history view supports clearing all exports.
-            After connectivity returns, automatically switches online when there are no
-            pending local edits; otherwise asks before switching to prevent losing work.
-            Offline saves and online cloud history remain separate and are never silently merged.
-            Selected rotation options retain clear blue active states in both modes.
-            Only CorelDRAW direct transfer is supported; the retired laser-editor bridge workflow is removed.
+            Only CorelDRAW direct transfer is supported.
             PC/Web version: ${{ steps.source.outputs.version }}.
             Web source commit: ${{ steps.source.outputs.web_sha }}
             PC source commit: ${{ steps.source.outputs.pc_sha }}
             Offline engine and UI were built together from this exact web commit.
-            The online view always runs the live website. Existing offline installations
-            require installing this updated setup to receive the new offline nesting changes.
-          files: release/Serula-Nesting-Pro-PC-Setup.exe
-          fail_on_unmatched_files: true
-) { throw "Invalid web version: $webVersion" }
-          Write-Host "Independent versions accepted: PC $pcVersion; web $webVersion."
-          $webSha = (git -C web-source rev-parse HEAD).Trim()
-          $pcSha = (git rev-parse HEAD).Trim()
-          "version=$pcVersion" >> $env:GITHUB_OUTPUT
-          "web_sha=$webSha" >> $env:GITHUB_OUTPUT
-          "pc_sha=$pcSha" >> $env:GITHUB_OUTPUT
-          $build = "true"
-          if ("${{ github.event_name }}" -eq "schedule") {
-            try {
-              $url = "https://api.github.com/repos/M93hasan/serula-nesting-pro-pc/releases/tags/pc-v$pcVersion"
-              $headers = @{ Authorization="Bearer $env:GH_TOKEN"; Accept="application/vnd.github+json" }
-              $release = Invoke-RestMethod -Uri $url -Headers $headers
-              $installer = @($release.assets | Where-Object { $_.name -eq 'Serula-Nesting-Pro-PC-Setup.exe' }).Count -gt 0
-              if ($installer -and $release.body.Contains("Web source commit: $webSha") -and
-                  $release.body.Contains("PC source commit: $pcSha")) {
-                $build = "false"
-                Write-Host "Already published this exact web/PC source pair."
-              }
-            } catch {
-              Write-Host "Exact release provenance unavailable; build will proceed."
-            }
-          }
-          "build=$build" >> $env:GITHUB_OUTPUT
-      - uses: actions/setup-node@v4
-        if: steps.source.outputs.build == 'true'
-        with:
-          node-version: "22"
-      - name: Validate Windows bridge PowerShell syntax
-        if: steps.source.outputs.build == 'true'
-        shell: powershell
-        run: |
-          $targets = @("desktop/bridge/SerulaTransferBridge.ps1", "desktop/bridge/SetupBundledBridge.ps1")
-          foreach ($path in $targets) {
-            $tokens = $null
-            $errors = $null
-            [void][System.Management.Automation.Language.Parser]::ParseFile((Resolve-Path $path), [ref]$tokens, [ref]$errors)
-            if ($errors.Count -gt 0) {
-              $errors | ForEach-Object { Write-Error "$path : $_" }
-              exit 1
-            }
-          }
-          $scriptText = Get-Content "desktop/bridge/SerulaTransferBridge.ps1" -Raw
-          if ($scriptText -notmatch "version='1.6'" -or
-              $scriptText -notmatch "supportedTargets=@\('corel'\)" -or
-              $scriptText -notmatch '\$target -ne ''corel''') {
-            throw "Corel-only bridge 1.6 safety restriction missing."
-          }
-      - name: Install PC dependencies
-        if: steps.source.outputs.build == 'true'
-        run: npm install --no-audit --no-fund
-      - name: Install web dependencies
-        if: steps.source.outputs.build == 'true'
-        run: npm ci --prefix web-source/web --no-audit --no-fund
-      - name: Validate offline desktop code and storage
-        if: steps.source.outputs.build == 'true'
-        run: |
-          node --check desktop/main.cjs
-          node --check desktop/hybrid-mode.cjs
-          node --check desktop/offline-server.cjs
-          node --check scripts/prepare-offline.cjs
-          npm run offline:test
-      - name: Package Windows installer with local UI and WASM engine
-        if: steps.source.outputs.build == 'true'
-        run: npm run dist:win
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
-          SERULA_WEB_SHA: ${{ steps.source.outputs.web_sha }}
-      - name: Upload Windows installer artifact
-        if: steps.source.outputs.build == 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: serula-nesting-pro-pc-setup
-          path: release/Serula-Nesting-Pro-PC-Setup.exe
-          if-no-files-found: error
-      - name: Resolve PC version
-        if: steps.source.outputs.build == 'true'
-        id: meta
-        shell: pwsh
-        run: |
-          $v = (Get-Content package.json -Raw | ConvertFrom-Json).version
-          "version=$v" >> $env:GITHUB_OUTPUT
-      - name: Publish versioned PC release
-        if: steps.source.outputs.build == 'true'
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: pc-v${{ steps.meta.outputs.version }}
-          name: Serula Nesting Pro PC v${{ steps.meta.outputs.version }}
-          body: |
-            Hybrid Windows version: opens live serula.site when reachable and automatically
-            falls back to the bundled local React/Rust-WASM editor without internet.
-            Local DXF import, nesting and export use the bundled local editor; the history view supports clearing all exports.
-            After connectivity returns, automatically switches online when there are no
-            pending local edits; otherwise asks before switching to prevent losing work.
-            Offline saves and online cloud history remain separate and are never silently merged.
-            Selected rotation options retain clear blue active states in both modes.
-            Only CorelDRAW direct transfer is supported; the retired laser-editor bridge workflow is removed.
-            PC/Web version: ${{ steps.source.outputs.version }}.
-            Web source commit: ${{ steps.source.outputs.web_sha }}
-            PC source commit: ${{ steps.source.outputs.pc_sha }}
-            Offline engine and UI were built together from this exact web commit.
-            The online view always runs the live website. Existing offline installations
-            require installing this updated setup to receive the new offline nesting changes.
+            Install this setup to receive the latest Windows desktop and bundled offline changes.
           files: release/Serula-Nesting-Pro-PC-Setup.exe
           fail_on_unmatched_files: true
